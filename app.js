@@ -3,29 +3,73 @@ const FIXTURES_URL = "data/fixtures.json";
 const LIVE_URL = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard";
 const ESPN_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard";
 const ESPN_SUMMARY = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary";
+const ESPN_TEAMS = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/teams";
 const summaryCache = new Map();
 const eventIdCache = new Map();
+
+const AVATAR_PALETTE = [
+  ["#facc15", "#fbbf24"],
+  ["#818cf8", "#6366f1"],
+  ["#34d399", "#10b981"],
+  ["#f472b6", "#ec4899"],
+  ["#fb7185", "#f43f5e"],
+  ["#60a5fa", "#3b82f6"],
+  ["#a78bfa", "#8b5cf6"],
+  ["#fbbf24", "#f97316"],
+  ["#2dd4bf", "#14b8a6"],
+];
 
 const $ = (sel) => document.querySelector(sel);
 
 const state = {
   picks: null,
   fixtures: null,
+  teams: {},
   live: {},
   liveFetchedAt: null,
   filter: "all",
   tab: "home",
 };
 
+function teamLogo(name) {
+  return state.teams[name]?.logo || null;
+}
+function teamLogoHtml(name, cls = "") {
+  const url = teamLogo(name);
+  return url ? `<img class="team-logo ${cls}" src="${url}" alt="" loading="lazy" decoding="async">` : "";
+}
+function playerInitial(name) {
+  return (name || "?").trim().slice(0, 1).toUpperCase();
+}
+function playerPalette(name) {
+  let h = 0;
+  for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const [a, b] = AVATAR_PALETTE[h % AVATAR_PALETTE.length];
+  return `--av1:${a}; --av2:${b}`;
+}
+
+async function loadTeams() {
+  try {
+    const r = await fetch("data/teams.json", { cache: "no-store" });
+    const j = await r.json();
+    return j.teams || {};
+  } catch (e) {
+    console.warn("teams load failed", e);
+    return {};
+  }
+}
+
 async function load() {
   const bust = `?v=${Date.now()}`;
   const opts = { cache: "no-store" };
-  const [picks, fixtures] = await Promise.all([
+  const [picks, fixtures, teams] = await Promise.all([
     fetch(PICKS_URL + bust, opts).then((r) => r.json()),
     fetch(FIXTURES_URL + bust, opts).then((r) => r.json()),
+    Object.keys(state.teams).length ? Promise.resolve(state.teams) : loadTeams(),
   ]);
   state.picks = picks;
   state.fixtures = fixtures;
+  state.teams = teams;
   render();
 }
 
@@ -175,6 +219,7 @@ function renderScoreboard(scores) {
       const bonus = row.bonus ? `<span class="bonus">+${row.bonus} bonus</span>` : "";
       return `<li class="${isLeader ? "leader" : ""}" data-player="${row.name}">
         <span class="rank">${displayRank}</span>
+        <span class="avatar" style="${playerPalette(row.name)}">${playerInitial(row.name)}</span>
         <span class="name">${row.name}</span>
         ${bonus}
         <span class="pts">${row.pts}</span>
@@ -262,7 +307,7 @@ function renderMatches() {
       return `<article class="${articleClass}" data-idx="${idx}">
         <div class="match-head">
           <div class="match-teams">
-            ${m.homeSv} – ${m.awaySv} ${score} ${outcomeBadge}
+            ${teamLogoHtml(m.homeEn)} ${m.homeSv} – ${m.awaySv} ${teamLogoHtml(m.awayEn)} ${score} ${outcomeBadge}
           </div>
           ${dateOrClock}
         </div>
@@ -327,7 +372,7 @@ function renderGroups() {
         .map(
           (r, i) => `<tr class="${i < 2 ? "q-top2" : i === 2 ? "q-third" : ""}">
             <td class="pos">${i + 1}</td>
-            <td class="team">${r.sv}</td>
+            <td class="team">${teamLogoHtml(r.name, "sm")} ${r.sv}</td>
             <td>${r.p}</td>
             <td>${r.w}</td>
             <td>${r.d}</td>
@@ -349,9 +394,9 @@ function renderGroups() {
           else if (home != null && away != null) score = `<span class="grp-score">${home}–${away}</span>`;
           else score = `<span class="grp-score pending">vs</span>`;
           return `<a class="grp-match" data-open-match="${idx}">
-            <span class="grp-team">${m.homeSv}</span>
+            <span class="grp-team">${teamLogoHtml(m.homeEn, "sm")} ${m.homeSv}</span>
             ${score}
-            <span class="grp-team away">${m.awaySv}</span>
+            <span class="grp-team away">${m.awaySv} ${teamLogoHtml(m.awayEn, "sm")}</span>
           </a>`;
         })
         .join("");
@@ -427,7 +472,51 @@ function switchTab(tab) {
   document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
   document.querySelectorAll(".view").forEach((v) => (v.hidden = v.id !== `view-${tab}`));
   if (tab === "groups") renderGroups();
+  if (tab === "knockout") renderKnockout();
   window.scrollTo(0, 0);
+}
+
+const KO_ROUNDS = [
+  { round: 2, label: "32-delsfinaler", short: "32-final" },
+  { round: 3, label: "Åttondelsfinaler", short: "16-final" },
+  { round: 4, label: "Kvartsfinaler", short: "Kvart" },
+  { round: 5, label: "Semifinaler", short: "Semi" },
+  { round: 6, label: "Match om brons", short: "Brons" },
+  { round: 7, label: "Final", short: "Final" },
+];
+
+function renderKnockout() {
+  const list = state.fixtures?.matches || [];
+  const sections = KO_ROUNDS.map(({ round, label }) => {
+    const games = list.filter((m) => m.RoundNumber === round);
+    if (!games.length) return "";
+    const cards = games
+      .sort((a, b) => new Date(a.DateUtc) - new Date(b.DateUtc))
+      .map((g) => {
+        const played = g.HomeTeamScore != null && g.AwayTeamScore != null;
+        const score = played ? `${g.HomeTeamScore}–${g.AwayTeamScore}` : "vs";
+        const dateStr = g.DateUtc ? formatDate(g.DateUtc) : "";
+        const homeLogo = teamLogoHtml(g.HomeTeam);
+        const awayLogo = teamLogoHtml(g.AwayTeam);
+        return `<article class="ko-match">
+          <div class="ko-side">${homeLogo}<span>${g.HomeTeam}</span></div>
+          <div class="ko-score ${played ? "" : "pending"}">${score}</div>
+          <div class="ko-side away"><span>${g.AwayTeam}</span>${awayLogo}</div>
+          <div class="ko-meta">${dateStr}${g.Location ? " · " + g.Location : ""}</div>
+        </article>`;
+      })
+      .join("");
+    return `<section class="ko-round">
+      <h3>${label}</h3>
+      <div class="ko-grid">${cards}</div>
+    </section>`;
+  }).join("");
+
+  document.getElementById("view-knockout").querySelector("section").innerHTML = `
+    <h2 class="view-title">Slutspel</h2>
+    <p class="ko-intro">Lagen fylls i automatiskt när gruppspelet är klart. Tipset för slutspelet öppnar 27 juni.</p>
+    ${sections || '<div class="knockout-stub"><p>Slutspelsmatcherna laddas när schemat publiceras.</p></div>'}
+  `;
 }
 
 function render() {
@@ -614,8 +703,17 @@ async function openDetail(idx) {
   }
   body.innerHTML = `
     <header class="detail-header">
-      <div class="detail-teams">${m.homeSv} – ${m.awaySv}</div>
-      <div class="detail-meta">${scoreLine}</div>
+      <div class="detail-hero">
+        <div class="detail-team-cell">
+          ${teamLogoHtml(m.homeEn, "lg")}
+          <span class="detail-team-name">${m.homeSv}</span>
+        </div>
+        <div class="detail-vs">${scoreLine || '<span class="detail-vs-txt">vs</span>'}</div>
+        <div class="detail-team-cell">
+          ${teamLogoHtml(m.awayEn, "lg")}
+          <span class="detail-team-name">${m.awaySv}</span>
+        </div>
+      </div>
     </header>
     ${detailOurPicksHtml(m, outcome)}
     <div id="detail-extra"><p class="detail-loading">Hämtar matchdetaljer…</p></div>
@@ -632,6 +730,9 @@ async function openDetail(idx) {
     const oddsObj = summary.pickcenter?.[0] || summary.odds?.[0];
     document.getElementById("detail-extra").innerHTML = `
       ${detailOddsHtml(oddsObj)}
+      ${detailProbabilityHtml(oddsObj, m)}
+      ${detailFormHtml(summary)}
+      ${detailH2HHtml(summary)}
       ${detailEventsHtml(summary)}
       ${detailNewsHtml(summary)}
       ${detailVenueHtml(summary)}
@@ -639,6 +740,78 @@ async function openDetail(idx) {
   } catch (err) {
     document.getElementById("detail-extra").innerHTML = `<p class="detail-empty">Kunde inte hämta detaljer (${err.message}).</p>`;
   }
+}
+
+function detailProbabilityHtml(oddsObj, m) {
+  if (!oddsObj) return "";
+  const h = americanToDecimal(oddsObj.homeTeamOdds?.moneyLine);
+  const d = americanToDecimal(oddsObj.drawOdds?.moneyLine);
+  const a = americanToDecimal(oddsObj.awayTeamOdds?.moneyLine);
+  if (h == null || d == null || a == null) return "";
+  const inv = [1 / h, 1 / d, 1 / a];
+  const sum = inv.reduce((x, y) => x + y, 0);
+  const probs = inv.map((p) => p / sum);
+  const pct = probs.map((p) => Math.round(p * 100));
+  return `<section class="detail-section">
+    <h3>Vinstsannolikhet <span class="provider">(implicit ur odds)</span></h3>
+    <div class="prob-rows">
+      <div class="prob-row"><span class="prob-lbl">${m.homeSv}</span><span class="prob-bar"><span class="prob-fill" style="width:${pct[0]}%; background:linear-gradient(90deg,#34d399,#10b981)"></span></span><span class="prob-pct">${pct[0]}%</span></div>
+      <div class="prob-row"><span class="prob-lbl">Oavgjort</span><span class="prob-bar"><span class="prob-fill" style="width:${pct[1]}%; background:linear-gradient(90deg,#94a3b8,#64748b)"></span></span><span class="prob-pct">${pct[1]}%</span></div>
+      <div class="prob-row"><span class="prob-lbl">${m.awaySv}</span><span class="prob-bar"><span class="prob-fill" style="width:${pct[2]}%; background:linear-gradient(90deg,#facc15,#f59e0b)"></span></span><span class="prob-pct">${pct[2]}%</span></div>
+    </div>
+  </section>`;
+}
+
+function formDots(events) {
+  return (events || []).slice(-5).map((e) => {
+    const r = e.gameResult;
+    const cls = r === "W" ? "w" : r === "L" ? "l" : "d";
+    return `<span class="form-dot ${cls}" title="${e.opponent?.displayName || ""} ${e.score || ""}">${r || "?"}</span>`;
+  }).join("");
+}
+
+function detailFormHtml(summary) {
+  const sets = summary.lastFiveGames;
+  if (!Array.isArray(sets) || !sets.length) return "";
+  const rows = sets
+    .map((s) => {
+      const name = s.team?.displayName || "";
+      const dots = formDots(s.events);
+      if (!dots) return "";
+      return `<div class="form-row">
+        <span class="form-team">${name}</span>
+        <span class="form-dots">${dots}</span>
+      </div>`;
+    })
+    .filter(Boolean)
+    .join("");
+  if (!rows) return "";
+  return `<section class="detail-section">
+    <h3>Form (senaste 5)</h3>
+    <div class="form-rows">${rows}</div>
+  </section>`;
+}
+
+function detailH2HHtml(summary) {
+  const h2h = summary.headToHeadGames;
+  if (!h2h?.events?.length) return "";
+  const events = h2h.events.slice(0, 5);
+  const list = events
+    .map((e) => {
+      const date = e.gameDate ? new Date(e.gameDate).toLocaleDateString("sv-SE", { year: "numeric", month: "short" }) : "";
+      const score = `${e.homeTeamScore}-${e.awayTeamScore}`;
+      const opp = e.opponent?.displayName || "";
+      return `<li>
+        <span class="h2h-date">${date}</span>
+        <span class="h2h-vs">vs ${opp}</span>
+        <span class="h2h-score">${score}</span>
+      </li>`;
+    })
+    .join("");
+  return `<section class="detail-section">
+    <h3>Head-to-head (senaste ${events.length})</h3>
+    <ul class="h2h-list">${list}</ul>
+  </section>`;
 }
 
 if ("serviceWorker" in navigator) {

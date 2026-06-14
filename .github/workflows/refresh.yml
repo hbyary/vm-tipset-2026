@@ -33,14 +33,37 @@ jobs:
             '{fetchedAt: $fetchedAt, source: $source, matches: $m[0]}' \
             > data/fixtures.json
 
+      - name: Fetch ESPN teams (logos)
+        run: |
+          curl --fail --silent --show-error \
+            -H "User-Agent: vm-tipset-refresh" \
+            "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/teams" \
+            -o /tmp/teams.json
+          test -s /tmp/teams.json
+          jq -n \
+            --arg fetchedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --slurpfile t /tmp/teams.json \
+            '{
+              fetchedAt: $fetchedAt,
+              teams: ($t[0].sports[0].leagues[0].teams | map({
+                key: .team.displayName,
+                value: {
+                  abbr: .team.abbreviation,
+                  id: .team.id,
+                  logo: ([.team.logos[] | select((.rel // []) | (contains(["full"]) and (contains(["dark"]) | not)))][0].href // .team.logo)
+                }
+              }) | from_entries)
+            }' \
+            > data/teams.json
+
       - name: Commit if changed
         run: |
           git config user.name  "vm-tipset-bot"
           git config user.email "bot@users.noreply.github.com"
-          if git diff --quiet -- data/fixtures.json; then
+          git add data/fixtures.json data/teams.json
+          if git diff --staged --quiet; then
             echo "No changes."
           else
-            git add data/fixtures.json
-            git commit -m "chore: refresh fixtures $(date -u +%Y-%m-%dT%H:%MZ)"
+            git commit -m "chore: refresh data $(date -u +%Y-%m-%dT%H:%MZ)"
             git push
           fi
