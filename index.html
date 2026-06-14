@@ -20,23 +20,47 @@
   <div class="meta">
     <span id="updated">…</span>
   </div>
+  <nav class="tabs">
+    <button class="tab active" data-tab="home">Hem</button>
+    <button class="tab" data-tab="groups">Grupper</button>
+    <button class="tab" data-tab="knockout">Slutspel</button>
+  </nav>
 </header>
 
-<section class="scoreboard">
-  <h2>Ställning</h2>
-  <ol id="scoreboard"></ol>
-  <p class="hint">1p per rätt 1X2 · 2p bonus för VM-vinnare</p>
-</section>
+<main id="view-home" class="view">
+  <section class="scoreboard">
+    <h2>Ställning</h2>
+    <ol id="scoreboard"></ol>
+    <p class="hint">1p per rätt 1X2 · 2p bonus för VM-vinnare · tryck på namn för detaljer</p>
+  </section>
 
-<section class="matches">
-  <div class="filters">
-    <button class="filter active" data-filter="all">Alla</button>
-    <button class="filter" data-filter="live"><span class="live-dot"></span>Live</button>
-    <button class="filter" data-filter="played">Spelade</button>
-    <button class="filter" data-filter="upcoming">Kommande</button>
-  </div>
-  <div id="matches"></div>
-</section>
+  <section class="matches">
+    <div class="filters">
+      <button class="filter active" data-filter="all">Alla</button>
+      <button class="filter" data-filter="live"><span class="live-dot"></span>Live</button>
+      <button class="filter" data-filter="played">Spelade</button>
+      <button class="filter" data-filter="upcoming">Kommande</button>
+    </div>
+    <div id="matches"></div>
+  </section>
+</main>
+
+<main id="view-groups" class="view" hidden>
+  <section>
+    <h2 class="view-title">Gruppspel</h2>
+    <div id="groups"></div>
+  </section>
+</main>
+
+<main id="view-knockout" class="view" hidden>
+  <section>
+    <h2 class="view-title">Slutspel</h2>
+    <div class="knockout-stub">
+      <p>Slutspelet startar <strong>27 juni</strong>. Tipset för 32-, 16-dels, kvarts, semi och final öppnar när gruppspelet är klart.</p>
+      <p class="hint">Lottningen för 32-delsfinalerna görs automatiskt från grupptabellerna.</p>
+    </div>
+  </section>
+</main>
 
 <footer>
   <p>Källa: <a href="https://fixturedownload.com/results/fifa-world-cup-2026" target="_blank" rel="noopener">fixturedownload.com</a> · live + odds via ESPN/DraftKings</p>
@@ -45,6 +69,11 @@
 <dialog id="detail" aria-label="Matchdetaljer">
   <button class="detail-close" aria-label="Stäng">✕</button>
   <div id="detail-body"><p class="detail-loading">Laddar…</p></div>
+</dialog>
+
+<dialog id="player" aria-label="Spelardetaljer">
+  <button class="detail-close" data-close="player" aria-label="Stäng">✕</button>
+  <div id="player-body"></div>
 </dialog>
 
 <script src="app.js" defer></script>

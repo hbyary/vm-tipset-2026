@@ -14,6 +14,7 @@ const state = {
   live: {},
   liveFetchedAt: null,
   filter: "all",
+  tab: "home",
 };
 
 async function load() {
@@ -172,7 +173,7 @@ function renderScoreboard(scores) {
       prevPts = row.pts;
       const isLeader = displayRank === 1 && row.pts > 0;
       const bonus = row.bonus ? `<span class="bonus">+${row.bonus} bonus</span>` : "";
-      return `<li class="${isLeader ? "leader" : ""}">
+      return `<li class="${isLeader ? "leader" : ""}" data-player="${row.name}">
         <span class="rank">${displayRank}</span>
         <span class="name">${row.name}</span>
         ${bonus}
@@ -284,45 +285,197 @@ function renderUpdated() {
   })}`;
 }
 
+function computeGroupTables() {
+  const table = {};
+  for (const m of state.picks.groupStage) {
+    const f = findFixture(m.homeEn, m.awayEn);
+    if (!f?.Group) continue;
+    const live = findLive(m.homeEn, m.awayEn);
+    const useLive = live?.state === "post" && f.HomeTeamScore == null;
+    const h = useLive ? Number(live.homeScore) : f.HomeTeamScore;
+    const a = useLive ? Number(live.awayScore) : f.AwayTeamScore;
+    const grp = f.Group;
+    if (!table[grp]) table[grp] = {};
+    const t = table[grp];
+    for (const team of [m.homeEn, m.awayEn]) {
+      if (!t[team]) t[team] = { name: team, sv: team === m.homeEn ? m.homeSv : m.awaySv, p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 };
+    }
+    if (h == null || a == null) continue;
+    t[m.homeEn].p++; t[m.awayEn].p++;
+    t[m.homeEn].gf += h; t[m.homeEn].ga += a;
+    t[m.awayEn].gf += a; t[m.awayEn].ga += h;
+    if (h > a) { t[m.homeEn].w++; t[m.homeEn].pts += 3; t[m.awayEn].l++; }
+    else if (h < a) { t[m.awayEn].w++; t[m.awayEn].pts += 3; t[m.homeEn].l++; }
+    else { t[m.homeEn].d++; t[m.awayEn].d++; t[m.homeEn].pts++; t[m.awayEn].pts++; }
+  }
+  // Sort each group
+  const out = {};
+  for (const g of Object.keys(table).sort()) {
+    out[g] = Object.values(table[g]).sort((x, y) =>
+      y.pts - x.pts || (y.gf - y.ga) - (x.gf - x.ga) || y.gf - x.gf || x.sv.localeCompare(y.sv, "sv"),
+    );
+  }
+  return out;
+}
+
+function renderGroups() {
+  const tables = computeGroupTables();
+  const allMatches = state.picks.groupStage.map((m, idx) => ({ idx, m, f: findFixture(m.homeEn, m.awayEn) }));
+  const html = Object.entries(tables)
+    .map(([grp, rows]) => {
+      const tableRows = rows
+        .map(
+          (r, i) => `<tr class="${i < 2 ? "q-top2" : i === 2 ? "q-third" : ""}">
+            <td class="pos">${i + 1}</td>
+            <td class="team">${r.sv}</td>
+            <td>${r.p}</td>
+            <td>${r.w}</td>
+            <td>${r.d}</td>
+            <td>${r.l}</td>
+            <td>${r.gf}-${r.ga}</td>
+            <td class="pts">${r.pts}</td>
+          </tr>`,
+        )
+        .join("");
+      const grpMatches = allMatches
+        .filter(({ f }) => f?.Group === grp)
+        .sort((x, y) => new Date(x.f.DateUtc) - new Date(y.f.DateUtc))
+        .map(({ idx, m, f }) => {
+          const { home, away } = resolvedScores(m);
+          const live = findLive(m.homeEn, m.awayEn);
+          const isLive = live?.state === "in";
+          let score;
+          if (isLive) score = `<span class="grp-score live">${live.homeScore}–${live.awayScore}</span>`;
+          else if (home != null && away != null) score = `<span class="grp-score">${home}–${away}</span>`;
+          else score = `<span class="grp-score pending">vs</span>`;
+          return `<a class="grp-match" data-open-match="${idx}">
+            <span class="grp-team">${m.homeSv}</span>
+            ${score}
+            <span class="grp-team away">${m.awaySv}</span>
+          </a>`;
+        })
+        .join("");
+      return `<section class="group-card">
+        <h3>${grp}</h3>
+        <table class="group-table">
+          <thead><tr><th></th><th>Lag</th><th>S</th><th>V</th><th>O</th><th>F</th><th>Mål</th><th>P</th></tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+        <div class="group-matches">${grpMatches}</div>
+      </section>`;
+    })
+    .join("");
+  document.getElementById("groups").innerHTML = html;
+}
+
+function playerStats(player) {
+  let pts = 0, hits = 0, misses = 0, blanks = 0;
+  const rows = [];
+  for (const m of state.picks.groupStage) {
+    const { home, away, fixture: f } = resolvedScores(m);
+    const outcome = outcomeFromScores(home, away);
+    const pick = m.picks[player] || "";
+    let status = "pending";
+    if (!pick) { blanks++; status = "empty"; }
+    else if (outcome == null) status = "pending";
+    else if (pick === outcome) { hits++; pts++; status = "correct"; }
+    else { misses++; status = "wrong"; }
+    rows.push({ m, f, home, away, outcome, pick, status });
+  }
+  const winnerPick = state.picks.winnerPicks[player] || "";
+  const actual = state.picks.actualWinner;
+  const winnerHit = actual && (state.picks.mapping[winnerPick] || winnerPick).toLowerCase() === (state.picks.mapping[actual] || actual).toLowerCase();
+  return { pts: pts + (winnerHit ? 2 : 0), hits, misses, blanks, winnerPick, winnerHit, rows };
+}
+
+function openPlayer(name) {
+  const st = playerStats(name);
+  const items = st.rows
+    .filter((r) => r.pick)
+    .map((r) => {
+      const dateStr = r.f?.DateUtc ? formatDate(r.f.DateUtc) : "";
+      const scoreStr = r.outcome != null ? `${r.home}–${r.away}` : "vs";
+      return `<li class="player-row ${r.status}">
+        <span class="pr-pick">${r.pick}</span>
+        <span class="pr-teams">${r.m.homeSv} – ${r.m.awaySv}</span>
+        <span class="pr-score">${scoreStr}</span>
+      </li>`;
+    })
+    .join("");
+  document.getElementById("player-body").innerHTML = `
+    <header class="detail-header">
+      <div class="detail-teams">${name}</div>
+      <div class="detail-meta">
+        <span class="detail-score">${st.pts} p</span>
+        <span class="player-stats">${st.hits} rätt · ${st.misses} fel · ${st.blanks} blank</span>
+      </div>
+    </header>
+    <section class="detail-section">
+      <h3>VM-vinnare-tips</h3>
+      <p class="winner-pick ${st.winnerHit ? "correct" : ""}">${st.winnerPick || "–"}</p>
+    </section>
+    <section class="detail-section">
+      <h3>Alla tips (${st.rows.filter(r => r.pick).length})</h3>
+      <ul class="player-rows">${items}</ul>
+    </section>
+  `;
+  document.getElementById("player").showModal();
+}
+
+function switchTab(tab) {
+  state.tab = tab;
+  document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
+  document.querySelectorAll(".view").forEach((v) => (v.hidden = v.id !== `view-${tab}`));
+  if (tab === "groups") renderGroups();
+  window.scrollTo(0, 0);
+}
+
 function render() {
   const scores = computeScores();
   renderScoreboard(scores);
   renderMatches();
+  if (state.tab === "groups") renderGroups();
   renderUpdated();
 }
 
 document.addEventListener("click", (e) => {
-  const btn = e.target.closest(".filter");
-  if (btn) {
+  const tab = e.target.closest(".tab");
+  if (tab) { switchTab(tab.dataset.tab); return; }
+
+  const filterBtn = e.target.closest(".filter");
+  if (filterBtn) {
     document.querySelectorAll(".filter").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-    state.filter = btn.dataset.filter;
+    filterBtn.classList.add("active");
+    state.filter = filterBtn.dataset.filter;
     renderMatches();
     return;
   }
+
+  const playerRow = e.target.closest("#scoreboard li[data-player]");
+  if (playerRow) { openPlayer(playerRow.dataset.player); return; }
+
+  const grpMatch = e.target.closest("[data-open-match]");
+  if (grpMatch) { openDetail(Number(grpMatch.dataset.openMatch)); return; }
+
   const card = e.target.closest(".match[data-idx]");
-  if (card) {
-    openDetail(Number(card.dataset.idx));
-    return;
-  }
+  if (card) { openDetail(Number(card.dataset.idx)); return; }
+
   const closeBtn = e.target.closest(".detail-close");
   if (closeBtn) {
-    document.getElementById("detail").close();
+    const which = closeBtn.dataset.close;
+    document.getElementById(which === "player" ? "player" : "detail").close();
   }
 });
 
-document.getElementById("detail").addEventListener("click", (e) => {
-  const dlg = e.currentTarget;
-  const rect = dlg.getBoundingClientRect();
-  if (
-    e.clientY < rect.top ||
-    e.clientY > rect.bottom ||
-    e.clientX < rect.left ||
-    e.clientX > rect.right
-  ) {
-    dlg.close();
-  }
-});
+function bindBackdropClose(id) {
+  document.getElementById(id).addEventListener("click", (e) => {
+    const dlg = e.currentTarget;
+    const r = dlg.getBoundingClientRect();
+    if (e.clientY < r.top || e.clientY > r.bottom || e.clientX < r.left || e.clientX > r.right) dlg.close();
+  });
+}
+bindBackdropClose("detail");
+bindBackdropClose("player");
 
 function americanToDecimal(ml) {
   if (ml == null || isNaN(ml)) return null;
