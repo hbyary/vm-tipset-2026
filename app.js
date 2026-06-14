@@ -1,6 +1,10 @@
 const PICKS_URL = "data/picks.json";
 const FIXTURES_URL = "data/fixtures.json";
 const LIVE_URL = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard";
+const ESPN_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard";
+const ESPN_SUMMARY = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary";
+const summaryCache = new Map();
+const eventIdCache = new Map();
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -196,7 +200,7 @@ function formatDate(iso) {
 
 function renderMatches() {
   const { picks } = state;
-  const rows = picks.groupStage.map((m) => {
+  const rows = picks.groupStage.map((m, idx) => {
     const { home, away, fixture: f } = resolvedScores(m);
     const live = findLive(m.homeEn, m.awayEn);
     const isLive = live?.state === "in";
@@ -204,7 +208,7 @@ function renderMatches() {
     const liveAway = isLive ? Number(live.awayScore) : null;
     const outcome = outcomeFromScores(home, away);
     const played = outcome != null;
-    return { m, f, live, isLive, liveHome, liveAway, homeScore: home, awayScore: away, outcome, played };
+    return { idx, m, f, live, isLive, liveHome, liveAway, homeScore: home, awayScore: away, outcome, played };
   });
 
   const filtered = rows.filter((r) => {
@@ -221,7 +225,7 @@ function renderMatches() {
   });
 
   const html = filtered
-    .map(({ m, f, live, isLive, liveHome, liveAway, homeScore, awayScore, outcome, played }) => {
+    .map(({ idx, m, f, live, isLive, liveHome, liveAway, homeScore, awayScore, outcome, played }) => {
       let score, dateOrClock, articleClass = "";
       if (isLive) {
         articleClass = "match live";
@@ -254,7 +258,7 @@ function renderMatches() {
           </div>`;
         })
         .join("");
-      return `<article class="${articleClass}">
+      return `<article class="${articleClass}" data-idx="${idx}">
         <div class="match-head">
           <div class="match-teams">
             ${m.homeSv} – ${m.awaySv} ${score} ${outcomeBadge}
@@ -289,12 +293,200 @@ function render() {
 
 document.addEventListener("click", (e) => {
   const btn = e.target.closest(".filter");
-  if (!btn) return;
-  document.querySelectorAll(".filter").forEach((b) => b.classList.remove("active"));
-  btn.classList.add("active");
-  state.filter = btn.dataset.filter;
-  renderMatches();
+  if (btn) {
+    document.querySelectorAll(".filter").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    state.filter = btn.dataset.filter;
+    renderMatches();
+    return;
+  }
+  const card = e.target.closest(".match[data-idx]");
+  if (card) {
+    openDetail(Number(card.dataset.idx));
+    return;
+  }
+  const closeBtn = e.target.closest(".detail-close");
+  if (closeBtn) {
+    document.getElementById("detail").close();
+  }
 });
+
+document.getElementById("detail").addEventListener("click", (e) => {
+  const dlg = e.currentTarget;
+  const rect = dlg.getBoundingClientRect();
+  if (
+    e.clientY < rect.top ||
+    e.clientY > rect.bottom ||
+    e.clientX < rect.left ||
+    e.clientX > rect.right
+  ) {
+    dlg.close();
+  }
+});
+
+function americanToDecimal(ml) {
+  if (ml == null || isNaN(ml)) return null;
+  return ml > 0 ? ml / 100 + 1 : 100 / Math.abs(ml) + 1;
+}
+function fmtOdds(dec) {
+  if (dec == null) return "–";
+  return dec >= 10 ? dec.toFixed(1) : dec.toFixed(2);
+}
+
+async function getEventId(homeEn, awayEn, dateUtc) {
+  const key = `${homeEn}|${awayEn}`;
+  if (eventIdCache.has(key)) return eventIdCache.get(key);
+  if (!dateUtc) return null;
+  const ymd = dateUtc.slice(0, 10).replace(/-/g, "");
+  try {
+    const r = await fetch(`${ESPN_SCOREBOARD}?dates=${ymd}`, { cache: "no-store" });
+    const j = await r.json();
+    for (const e of j.events || []) {
+      const c = e.competitions?.[0];
+      const h = c?.competitors?.find((x) => x.homeAway === "home");
+      const a = c?.competitors?.find((x) => x.homeAway === "away");
+      if (!h || !a) continue;
+      const hn = espnTeamName(h.team.displayName);
+      const an = espnTeamName(a.team.displayName);
+      eventIdCache.set(`${hn}|${an}`, e.id);
+    }
+    return eventIdCache.get(key) || null;
+  } catch (err) {
+    console.warn("event id lookup failed", err);
+    return null;
+  }
+}
+
+async function getSummary(eventId) {
+  if (summaryCache.has(eventId)) return summaryCache.get(eventId);
+  const r = await fetch(`${ESPN_SUMMARY}?event=${eventId}`, { cache: "no-store" });
+  if (!r.ok) throw new Error("summary " + r.status);
+  const j = await r.json();
+  summaryCache.set(eventId, j);
+  return j;
+}
+
+function detailOddsHtml(oddsObj) {
+  if (!oddsObj) return "";
+  const h = americanToDecimal(oddsObj.homeTeamOdds?.moneyLine);
+  const d = americanToDecimal(oddsObj.drawOdds?.moneyLine);
+  const a = americanToDecimal(oddsObj.awayTeamOdds?.moneyLine);
+  if (h == null && d == null && a == null) return "";
+  return `<section class="detail-section">
+    <h3>Marknadsodds <span class="provider">${oddsObj.provider?.name || ""}</span></h3>
+    <div class="odds-grid">
+      <div class="odd"><span class="lbl">1</span><span class="val">${fmtOdds(h)}</span></div>
+      <div class="odd"><span class="lbl">X</span><span class="val">${fmtOdds(d)}</span></div>
+      <div class="odd"><span class="lbl">2</span><span class="val">${fmtOdds(a)}</span></div>
+    </div>
+  </section>`;
+}
+
+function detailEventsHtml(summary) {
+  const events = summary.keyEvents || summary.scoringPlays || [];
+  if (!events.length) return "";
+  const items = events
+    .filter((e) => /goal|card|kick|penalty|sub/i.test(e.type?.text || e.text || ""))
+    .map((e) => {
+      const clock = e.clock?.displayValue || "";
+      const team = e.team?.displayName || "";
+      const text = e.text || e.type?.text || "";
+      return `<li><span class="evt-clock">${clock}</span><span class="evt-team">${team}</span><span class="evt-text">${text}</span></li>`;
+    });
+  if (!items.length) return "";
+  return `<section class="detail-section">
+    <h3>Händelser</h3>
+    <ul class="events-list">${items.join("")}</ul>
+  </section>`;
+}
+
+function detailNewsHtml(summary) {
+  const articles = summary.news?.articles || [];
+  if (!articles.length) return "";
+  const items = articles
+    .slice(0, 4)
+    .map(
+      (a) =>
+        `<li><a href="${a.links?.web?.href || "#"}" target="_blank" rel="noopener">${a.headline}</a><span class="news-desc">${a.description || ""}</span></li>`,
+    );
+  return `<section class="detail-section">
+    <h3>Nyheter</h3>
+    <ul class="news-list">${items.join("")}</ul>
+  </section>`;
+}
+
+function detailVenueHtml(summary) {
+  const v = summary.gameInfo?.venue;
+  if (!v) return "";
+  const where = [v.fullName, v.address?.city, v.address?.country].filter(Boolean).join(", ");
+  return `<p class="detail-venue">📍 ${where}</p>`;
+}
+
+function detailOurPicksHtml(m, outcome) {
+  const cells = state.picks.players
+    .map((p) => {
+      const pick = m.picks[p] || "";
+      const cls = !pick
+        ? "empty"
+        : outcome == null
+          ? ""
+          : pick === outcome
+            ? "correct"
+            : "wrong";
+      return `<div class="pick ${cls}"><span class="who">${p}</span><span class="what">${pick || "–"}</span></div>`;
+    })
+    .join("");
+  return `<section class="detail-section">
+    <h3>Era tips</h3>
+    <div class="picks">${cells}</div>
+  </section>`;
+}
+
+async function openDetail(idx) {
+  const m = state.picks.groupStage[idx];
+  if (!m) return;
+  const dlg = document.getElementById("detail");
+  const body = document.getElementById("detail-body");
+  const { home, away, fixture: f } = resolvedScores(m);
+  const live = findLive(m.homeEn, m.awayEn);
+  const isLive = live?.state === "in";
+  const outcome = outcomeFromScores(home, away);
+  let scoreLine;
+  if (isLive) {
+    scoreLine = `<span class="detail-score live">${live.homeScore}–${live.awayScore}</span><span class="live-badge"><span class="live-dot"></span>${live.clock}</span>`;
+  } else if (outcome) {
+    scoreLine = `<span class="detail-score">${home}–${away}</span>`;
+  } else {
+    scoreLine = f?.DateUtc ? `<span class="detail-when">${formatDate(f.DateUtc)}</span>` : "";
+  }
+  body.innerHTML = `
+    <header class="detail-header">
+      <div class="detail-teams">${m.homeSv} – ${m.awaySv}</div>
+      <div class="detail-meta">${scoreLine}</div>
+    </header>
+    ${detailOurPicksHtml(m, outcome)}
+    <div id="detail-extra"><p class="detail-loading">Hämtar matchdetaljer…</p></div>
+  `;
+  dlg.showModal();
+
+  try {
+    const eid = await getEventId(m.homeEn, m.awayEn, f?.DateUtc);
+    if (!eid) {
+      document.getElementById("detail-extra").innerHTML = `<p class="detail-empty">Inga detaljer från ESPN än — kommer närmare matchstart.</p>${detailVenueHtml({ gameInfo: { venue: f?.Location ? { fullName: f.Location } : null } })}`;
+      return;
+    }
+    const summary = await getSummary(eid);
+    const oddsObj = summary.pickcenter?.[0] || summary.odds?.[0];
+    document.getElementById("detail-extra").innerHTML = `
+      ${detailOddsHtml(oddsObj)}
+      ${detailEventsHtml(summary)}
+      ${detailNewsHtml(summary)}
+      ${detailVenueHtml(summary)}
+    `;
+  } catch (err) {
+    document.getElementById("detail-extra").innerHTML = `<p class="detail-empty">Kunde inte hämta detaljer (${err.message}).</p>`;
+  }
+}
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () =>
