@@ -11,14 +11,28 @@ const state = {
 
 async function load() {
   const bust = `?v=${Date.now()}`;
+  const opts = { cache: "no-store" };
   const [picks, fixtures] = await Promise.all([
-    fetch(PICKS_URL + bust).then((r) => r.json()),
-    fetch(FIXTURES_URL + bust).then((r) => r.json()),
+    fetch(PICKS_URL + bust, opts).then((r) => r.json()),
+    fetch(FIXTURES_URL + bust, opts).then((r) => r.json()),
   ]);
   state.picks = picks;
   state.fixtures = fixtures;
   render();
 }
+
+async function refresh() {
+  try {
+    await load();
+  } catch (e) {
+    console.warn("refresh failed", e);
+  }
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) refresh();
+});
+setInterval(refresh, 60_000);
 
 function findFixture(homeEn, awayEn) {
   return state.fixtures.matches.find(
