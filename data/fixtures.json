@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-13T23:33:55.428Z",
+  "fetchedAt": "2026-06-14T07:11:10Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -70,9 +70,9 @@
       "HomeTeam": "Brazil",
       "AwayTeam": "Morocco",
       "Group": "Group C",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 1,
+      "AwayTeamScore": 1,
+      "Winner": "Draw"
     },
     {
       "MatchNumber": 5,
@@ -82,9 +82,9 @@
       "HomeTeam": "Haiti",
       "AwayTeam": "Scotland",
       "Group": "Group C",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 0,
+      "AwayTeamScore": 1,
+      "Winner": "Scotland"
     },
     {
       "MatchNumber": 6,
@@ -94,9 +94,9 @@
       "HomeTeam": "Australia",
       "AwayTeam": "Türkiye",
       "Group": "Group D",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 2,
+      "AwayTeamScore": 0,
+      "Winner": "Australia"
     },
     {
       "MatchNumber": 10,
