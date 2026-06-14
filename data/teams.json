@@ -1,245 +1,245 @@
 {
-    "teams":  {
-                  "Switzerland":  {
-                                      "abbr":  "SUI",
-                                      "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/sui.png",
-                                      "id":  "475"
-                                  },
-                  "Egypt":  {
-                                "abbr":  "EGY",
-                                "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/egy.png",
-                                "id":  "2620"
-                            },
-                  "Cape Verde":  {
-                                     "abbr":  "CPV",
-                                     "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/cpv.png",
-                                     "id":  "2597"
-                                 },
-                  "Argentina":  {
-                                    "abbr":  "ARG",
-                                    "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/arg.png",
-                                    "id":  "202"
-                                },
-                  "Uzbekistan":  {
-                                     "abbr":  "UZB",
-                                     "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/uzb.png",
-                                     "id":  "2570"
-                                 },
-                  "Qatar":  {
-                                "abbr":  "QAT",
-                                "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/qat.png",
-                                "id":  "4398"
-                            },
-                  "Bosnia-Herzegovina":  {
-                                             "abbr":  "BIH",
-                                             "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/bih.png",
-                                             "id":  "452"
-                                         },
-                  "Canada":  {
-                                 "abbr":  "CAN",
-                                 "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/can.png",
-                                 "id":  "206"
-                             },
-                  "Algeria":  {
-                                  "abbr":  "ALG",
-                                  "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/alg.png",
-                                  "id":  "624"
-                              },
-                  "Netherlands":  {
-                                      "abbr":  "NED",
-                                      "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/ned.png",
-                                      "id":  "449"
-                                  },
-                  "Panama":  {
-                                 "abbr":  "PAN",
-                                 "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/pan.png",
-                                 "id":  "2659"
-                             },
-                  "New Zealand":  {
-                                      "abbr":  "NZL",
-                                      "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/nzl.png",
-                                      "id":  "2666"
-                                  },
-                  "Morocco":  {
-                                  "abbr":  "MAR",
-                                  "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/mar.png",
-                                  "id":  "2869"
-                              },
-                  "Saudi Arabia":  {
-                                       "abbr":  "KSA",
-                                       "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/ksa.png",
-                                       "id":  "655"
-                                   },
-                  "Sweden":  {
-                                 "abbr":  "SWE",
-                                 "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/swe.png",
-                                 "id":  "466"
-                             },
-                  "Croatia":  {
-                                  "abbr":  "CRO",
-                                  "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/cro.png",
-                                  "id":  "477"
-                              },
-                  "CuraÃ§ao":  {
-                                   "abbr":  "CUW",
-                                   "logo":  "https://a.espncdn.com/i/teamlogos/soccer/500/11678.png",
-                                   "id":  "11678"
-                               },
-                  "Senegal":  {
-                                  "abbr":  "SEN",
-                                  "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/sen.png",
-                                  "id":  "654"
-                              },
-                  "TÃ¼rkiye":  {
-                                   "abbr":  "TUR",
-                                   "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/tur.png",
-                                   "id":  "465"
-                               },
-                  "Iran":  {
-                               "abbr":  "IRN",
-                               "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/irn.png",
-                               "id":  "469"
-                           },
-                  "Tunisia":  {
-                                  "abbr":  "TUN",
-                                  "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/tun.png",
-                                  "id":  "659"
-                              },
-                  "Austria":  {
-                                  "abbr":  "AUT",
-                                  "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/aut.png",
-                                  "id":  "474"
-                              },
-                  "Scotland":  {
-                                   "abbr":  "SCO",
-                                   "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/sco.png",
-                                   "id":  "580"
-                               },
-                  "Jordan":  {
-                                 "abbr":  "JOR",
-                                 "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/jor.png",
-                                 "id":  "2917"
-                             },
-                  "Ecuador":  {
-                                  "abbr":  "ECU",
-                                  "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/ecu.png",
-                                  "id":  "209"
-                              },
-                  "Australia":  {
-                                    "abbr":  "AUS",
-                                    "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/aus.png",
-                                    "id":  "628"
-                                },
-                  "England":  {
-                                  "abbr":  "ENG",
-                                  "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/eng.png",
-                                  "id":  "448"
-                              },
-                  "Colombia":  {
-                                   "abbr":  "COL",
-                                   "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/col.png",
-                                   "id":  "208"
-                               },
-                  "Germany":  {
-                                  "abbr":  "GER",
-                                  "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/ger.png",
-                                  "id":  "481"
-                              },
-                  "France":  {
-                                 "abbr":  "FRA",
-                                 "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/fra.png",
-                                 "id":  "478"
-                             },
-                  "Japan":  {
-                                "abbr":  "JPN",
-                                "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/jpn.png",
-                                "id":  "627"
-                            },
-                  "Czechia":  {
-                                  "abbr":  "CZE",
-                                  "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/cze.png",
-                                  "id":  "450"
-                              },
-                  "Paraguay":  {
-                                   "abbr":  "PAR",
-                                   "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/par.png",
-                                   "id":  "210"
-                               },
-                  "Brazil":  {
-                                 "abbr":  "BRA",
-                                 "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/bra.png",
-                                 "id":  "205"
-                             },
-                  "Norway":  {
-                                 "abbr":  "NOR",
-                                 "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/nor.png",
-                                 "id":  "464"
-                             },
-                  "Iraq":  {
-                               "abbr":  "IRQ",
-                               "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/irq.png",
-                               "id":  "4375"
-                           },
-                  "Spain":  {
-                                "abbr":  "ESP",
-                                "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/esp.png",
-                                "id":  "164"
-                            },
-                  "Portugal":  {
-                                   "abbr":  "POR",
-                                   "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/por.png",
-                                   "id":  "482"
-                               },
-                  "Haiti":  {
-                                "abbr":  "HAI",
-                                "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/hai.png",
-                                "id":  "2654"
-                            },
-                  "United States":  {
-                                        "abbr":  "USA",
-                                        "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/usa.png",
-                                        "id":  "660"
-                                    },
-                  "Mexico":  {
-                                 "abbr":  "MEX",
-                                 "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/mex.png",
-                                 "id":  "203"
-                             },
-                  "Ivory Coast":  {
-                                      "abbr":  "CIV",
-                                      "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/civ.png",
-                                      "id":  "4789"
-                                  },
-                  "Ghana":  {
-                                "abbr":  "GHA",
-                                "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/gha.png",
-                                "id":  "4469"
-                            },
-                  "South Korea":  {
-                                      "abbr":  "KOR",
-                                      "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/kors.png",
-                                      "id":  "451"
-                                  },
-                  "Belgium":  {
-                                  "abbr":  "BEL",
-                                  "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/bel.png",
-                                  "id":  "459"
-                              },
-                  "Uruguay":  {
-                                  "abbr":  "URU",
-                                  "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/uru.png",
-                                  "id":  "212"
-                              },
-                  "South Africa":  {
-                                       "abbr":  "RSA",
-                                       "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/rsa.png",
-                                       "id":  "467"
-                                   },
-                  "Congo DR":  {
-                                   "abbr":  "COD",
-                                   "logo":  "https://a.espncdn.com/i/teamlogos/countries/500/rdc.png",
-                                   "id":  "2850"
-                               }
-              },
-    "fetchedAt":  "2026-06-14T08:08:45.4435336Z"
+  "fetchedAt": "2026-06-14T13:19:59Z",
+  "teams": {
+    "Algeria": {
+      "abbr": "ALG",
+      "id": "624",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/alg.png"
+    },
+    "Argentina": {
+      "abbr": "ARG",
+      "id": "202",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/arg.png"
+    },
+    "Australia": {
+      "abbr": "AUS",
+      "id": "628",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/aus.png"
+    },
+    "Austria": {
+      "abbr": "AUT",
+      "id": "474",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/aut.png"
+    },
+    "Belgium": {
+      "abbr": "BEL",
+      "id": "459",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/bel.png"
+    },
+    "Bosnia-Herzegovina": {
+      "abbr": "BIH",
+      "id": "452",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/bih.png"
+    },
+    "Brazil": {
+      "abbr": "BRA",
+      "id": "205",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/bra.png"
+    },
+    "Canada": {
+      "abbr": "CAN",
+      "id": "206",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/can.png"
+    },
+    "Cape Verde": {
+      "abbr": "CPV",
+      "id": "2597",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/cpv.png"
+    },
+    "Colombia": {
+      "abbr": "COL",
+      "id": "208",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/col.png"
+    },
+    "Congo DR": {
+      "abbr": "COD",
+      "id": "2850",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/rdc.png"
+    },
+    "Croatia": {
+      "abbr": "CRO",
+      "id": "477",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/cro.png"
+    },
+    "Curaçao": {
+      "abbr": "CUW",
+      "id": "11678",
+      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/11678.png"
+    },
+    "Czechia": {
+      "abbr": "CZE",
+      "id": "450",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/cze.png"
+    },
+    "Ecuador": {
+      "abbr": "ECU",
+      "id": "209",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/ecu.png"
+    },
+    "Egypt": {
+      "abbr": "EGY",
+      "id": "2620",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/egy.png"
+    },
+    "England": {
+      "abbr": "ENG",
+      "id": "448",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/eng.png"
+    },
+    "France": {
+      "abbr": "FRA",
+      "id": "478",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/fra.png"
+    },
+    "Germany": {
+      "abbr": "GER",
+      "id": "481",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/ger.png"
+    },
+    "Ghana": {
+      "abbr": "GHA",
+      "id": "4469",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/gha.png"
+    },
+    "Haiti": {
+      "abbr": "HAI",
+      "id": "2654",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/hai.png"
+    },
+    "Iran": {
+      "abbr": "IRN",
+      "id": "469",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/irn.png"
+    },
+    "Iraq": {
+      "abbr": "IRQ",
+      "id": "4375",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/irq.png"
+    },
+    "Ivory Coast": {
+      "abbr": "CIV",
+      "id": "4789",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/civ.png"
+    },
+    "Japan": {
+      "abbr": "JPN",
+      "id": "627",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/jpn.png"
+    },
+    "Jordan": {
+      "abbr": "JOR",
+      "id": "2917",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/jor.png"
+    },
+    "Mexico": {
+      "abbr": "MEX",
+      "id": "203",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/mex.png"
+    },
+    "Morocco": {
+      "abbr": "MAR",
+      "id": "2869",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/mar.png"
+    },
+    "Netherlands": {
+      "abbr": "NED",
+      "id": "449",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/ned.png"
+    },
+    "New Zealand": {
+      "abbr": "NZL",
+      "id": "2666",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/nzl.png"
+    },
+    "Norway": {
+      "abbr": "NOR",
+      "id": "464",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/nor.png"
+    },
+    "Panama": {
+      "abbr": "PAN",
+      "id": "2659",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/pan.png"
+    },
+    "Paraguay": {
+      "abbr": "PAR",
+      "id": "210",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/par.png"
+    },
+    "Portugal": {
+      "abbr": "POR",
+      "id": "482",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/por.png"
+    },
+    "Qatar": {
+      "abbr": "QAT",
+      "id": "4398",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/qat.png"
+    },
+    "Saudi Arabia": {
+      "abbr": "KSA",
+      "id": "655",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/ksa.png"
+    },
+    "Scotland": {
+      "abbr": "SCO",
+      "id": "580",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/sco.png"
+    },
+    "Senegal": {
+      "abbr": "SEN",
+      "id": "654",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/sen.png"
+    },
+    "South Africa": {
+      "abbr": "RSA",
+      "id": "467",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/rsa.png"
+    },
+    "South Korea": {
+      "abbr": "KOR",
+      "id": "451",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/kors.png"
+    },
+    "Spain": {
+      "abbr": "ESP",
+      "id": "164",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/esp.png"
+    },
+    "Sweden": {
+      "abbr": "SWE",
+      "id": "466",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/swe.png"
+    },
+    "Switzerland": {
+      "abbr": "SUI",
+      "id": "475",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/sui.png"
+    },
+    "Tunisia": {
+      "abbr": "TUN",
+      "id": "659",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/tun.png"
+    },
+    "Türkiye": {
+      "abbr": "TUR",
+      "id": "465",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/tur.png"
+    },
+    "United States": {
+      "abbr": "USA",
+      "id": "660",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/usa.png"
+    },
+    "Uruguay": {
+      "abbr": "URU",
+      "id": "212",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/uru.png"
+    },
+    "Uzbekistan": {
+      "abbr": "UZB",
+      "id": "2570",
+      "logo": "https://a.espncdn.com/i/teamlogos/countries/500/uzb.png"
+    }
+  }
 }
