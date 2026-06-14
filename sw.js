@@ -1,4 +1,4 @@
-const CACHE = "vm-tipset-2026-v8";
+const CACHE = "vm-tipset-2026-v9";
 const STATIC = [
   "./",
   "index.html",

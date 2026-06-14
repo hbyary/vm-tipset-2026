@@ -141,18 +141,19 @@ document.addEventListener("visibilitychange", () => {
     pollLive();
   }
 });
-// Slow refresh of static data every 30 minutes
-setInterval(refresh, 30 * 60_000);
-// Live poll: every 10s while a match is in window, otherwise idle
+// Static data refresh every 60s — keeps "Synkad" indicator current
+setInterval(refresh, 60_000);
+// Live poll: every 10s during live windows, otherwise every 2 min to detect kickoffs early
 let livePollTimer = null;
 function tuneLivePoll() {
   const fast = liveWindowActive();
-  const interval = fast ? 10_000 : 5 * 60_000;
+  const interval = fast ? 10_000 : 120_000;
   if (livePollTimer) clearInterval(livePollTimer);
   livePollTimer = setInterval(pollLive, interval);
 }
 setInterval(tuneLivePoll, 60_000);
 tuneLivePoll();
+window.addEventListener("focus", () => { refresh(); pollLive(); });
 
 function findFixture(homeEn, awayEn) {
   return state.fixtures.matches.find(
@@ -237,15 +238,37 @@ function renderScoreboard(scores) {
   let prevPts = null;
   let rank = 0;
   let displayRank = 0;
-  const html = ordered
+  const ranked = ordered.map((row) => {
+    rank++;
+    if (row.pts !== prevPts) displayRank = rank;
+    prevPts = row.pts;
+    return { ...row, displayRank };
+  });
+
+  const top3 = ranked.slice(0, 3);
+  const podiumOrder = [top3[1], top3[0], top3[2]].filter(Boolean);
+  const slotByIndex = ["silver", "gold", "bronze"];
+  const podiumHtml = podiumOrder
+    .map((r, i) => {
+      const slot = top3.indexOf(r) === 0 ? 1 : top3.indexOf(r) === 1 ? 2 : 3;
+      const medal = slot === 1 ? "🥇" : slot === 2 ? "🥈" : "🥉";
+      return `<div class="pod pod-${slot}" data-player="${r.name}">
+        <div class="pod-medal">${medal}</div>
+        <div class="pod-avatar" style="${playerPalette(r.name)}">${playerInitial(r.name)}</div>
+        <div class="pod-name">${r.name}</div>
+        <div class="pod-pts">${r.pts}<span>p</span></div>
+      </div>`;
+    })
+    .join("");
+  document.getElementById("podium").innerHTML = podiumHtml;
+
+  const top3Set = new Set(top3);
+  const rest = ranked.filter((r) => !top3Set.has(r));
+  const html = rest
     .map((row) => {
-      rank++;
-      if (row.pts !== prevPts) displayRank = rank;
-      prevPts = row.pts;
-      const isLeader = displayRank === 1 && row.pts > 0;
       const bonus = row.bonus ? `<span class="bonus">+${row.bonus} bonus</span>` : "";
-      return `<li class="${isLeader ? "leader" : ""}" data-player="${row.name}">
-        <span class="rank">${displayRank}</span>
+      return `<li data-player="${row.name}">
+        <span class="rank">${row.displayRank}</span>
         <span class="avatar" style="${playerPalette(row.name)}">${playerInitial(row.name)}</span>
         <span class="name">${row.name}</span>
         ${bonus}
@@ -812,25 +835,43 @@ function renderKnockout() {
   `;
 }
 
+function heroFlagBg(homeEn, awayEn) {
+  const h = teamLogo(homeEn);
+  const a = teamLogo(awayEn);
+  if (!h && !a) return "";
+  return `style="--hero-bg-h:url('${h || ""}'); --hero-bg-a:url('${a || ""}')"`;
+}
+
 function renderHero() {
   const el = document.getElementById("hero");
   if (!el) return;
   const all = state.picks.groupStage
-    .map((m) => ({ m, f: findFixture(m.homeEn, m.awayEn) }))
+    .map((m, idx) => ({ idx, m, f: findFixture(m.homeEn, m.awayEn) }))
     .filter((x) => x.f?.DateUtc);
   const now = Date.now();
 
   const liveOne = all.find(({ m }) => findLive(m.homeEn, m.awayEn)?.state === "in");
   if (liveOne) {
     const live = findLive(liveOne.m.homeEn, liveOne.m.awayEn);
-    el.innerHTML = `<div class="hero-card live-card">
-      <div class="hero-tag"><span class="live-dot"></span>Live nu</div>
-      <div class="hero-match">
-        ${teamLogoHtml(liveOne.m.homeEn)} ${liveOne.m.homeSv}
-        <span class="hero-score">${live.homeScore}–${live.awayScore}</span>
-        ${liveOne.m.awaySv} ${teamLogoHtml(liveOne.m.awayEn)}
+    el.innerHTML = `<div class="hero-card live-card" data-open-match="${liveOne.idx}" ${heroFlagBg(liveOne.m.homeEn, liveOne.m.awayEn)}>
+      <div class="hero-bg"></div>
+      <div class="hero-content">
+        <div class="hero-tag"><span class="live-dot"></span>Live nu · ${live.clock || ""}</div>
+        <div class="hero-teams">
+          <div class="hero-side">
+            ${teamLogoHtml(liveOne.m.homeEn, "lg")}
+            <div class="hero-team-name">${liveOne.m.homeSv}</div>
+          </div>
+          <div class="hero-vs-score">
+            <div class="hero-big-score">${live.homeScore}–${live.awayScore}</div>
+          </div>
+          <div class="hero-side">
+            ${teamLogoHtml(liveOne.m.awayEn, "lg")}
+            <div class="hero-team-name">${liveOne.m.awaySv}</div>
+          </div>
+        </div>
+        <div class="hero-sub">${liveOne.f.Location || ""}</div>
       </div>
-      <div class="hero-sub">${live.clock || ""}</div>
     </div>`;
     return;
   }
@@ -845,15 +886,27 @@ function renderHero() {
   const ms = new Date(next.f.DateUtc).getTime() - now;
   const hours = Math.floor(ms / 3_600_000);
   const days = Math.floor(hours / 24);
-  const countdown = days > 0 ? `om ${days}d ${hours % 24}h` : hours > 0 ? `om ${hours}h ${Math.floor((ms % 3_600_000) / 60_000)}m` : `om ${Math.floor(ms / 60_000)} min`;
-  el.innerHTML = `<div class="hero-card">
-    <div class="hero-tag">Nästa match · ${countdown}</div>
-    <div class="hero-match">
-      ${teamLogoHtml(next.m.homeEn)} ${next.m.homeSv}
-      <span class="hero-vs">vs</span>
-      ${next.m.awaySv} ${teamLogoHtml(next.m.awayEn)}
+  const countdown = days > 0 ? `${days}d ${hours % 24}h` : hours > 0 ? `${hours}h ${Math.floor((ms % 3_600_000) / 60_000)}m` : `${Math.floor(ms / 60_000)} min`;
+  el.innerHTML = `<div class="hero-card" data-open-match="${next.idx}" ${heroFlagBg(next.m.homeEn, next.m.awayEn)}>
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <div class="hero-tag">Nästa match · sparkas igång om ${countdown}</div>
+      <div class="hero-teams">
+        <div class="hero-side">
+          ${teamLogoHtml(next.m.homeEn, "lg")}
+          <div class="hero-team-name">${next.m.homeSv}</div>
+        </div>
+        <div class="hero-vs-score">
+          <div class="hero-vs-txt">vs</div>
+          <div class="hero-time">${formatDate(next.f.DateUtc)}</div>
+        </div>
+        <div class="hero-side">
+          ${teamLogoHtml(next.m.awayEn, "lg")}
+          <div class="hero-team-name">${next.m.awaySv}</div>
+        </div>
+      </div>
+      <div class="hero-sub">${next.f.Location || ""}</div>
     </div>
-    <div class="hero-sub">${formatDate(next.f.DateUtc)} · ${next.f.Location || ""}</div>
   </div>`;
 }
 
@@ -880,8 +933,8 @@ document.addEventListener("click", (e) => {
     return;
   }
 
-  const playerRow = e.target.closest("#scoreboard li[data-player]");
-  if (playerRow) { openPlayer(playerRow.dataset.player); return; }
+  const playerRow = e.target.closest("[data-player]");
+  if (playerRow && !e.target.closest(".tab")) { openPlayer(playerRow.dataset.player); return; }
 
   const grpMatch = e.target.closest("[data-open-match]");
   if (grpMatch) { openDetail(Number(grpMatch.dataset.openMatch)); return; }
