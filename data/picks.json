@@ -1,0 +1,1313 @@
+{
+    "tournament":  "FIFA World Cup 2026",
+    "source":  {
+                   "name":  "fixturedownload.com",
+                   "feed":  "https://fixturedownload.com/feed/json/fifa-world-cup-2026"
+               },
+    "players":  [
+                    "Ramen",
+                    "Richard",
+                    "Robban",
+                    "Zerian",
+                    "Mattias",
+                    "Hamze",
+                    "Fredrik",
+                    "Nichlas",
+                    "Erik"
+                ],
+    "mapping":  {
+                    "Mexico":  "Mexico",
+                    "Sydafrika":  "South Africa",
+                    "Sydkorea":  "Korea Republic",
+                    "Tjeckien":  "Czechia",
+                    "Kanada":  "Canada",
+                    "Bosnien":  "Bosnia and Herzegovina",
+                    "USA":  "USA",
+                    "Paraguay":  "Paraguay",
+                    "Qatar":  "Qatar",
+                    "Schweiz":  "Switzerland",
+                    "Brasilien":  "Brazil",
+                    "Marocko":  "Morocco",
+                    "Haiti":  "Haiti",
+                    "Skottland":  "Scotland",
+                    "Scottland":  "Scotland",
+                    "Australien":  "Australia",
+                    "Turkiet":  "Türkiye",
+                    "Tyskland":  "Germany",
+                    "Curacao":  "Curaçao",
+                    "Curacoa":  "Curaçao",
+                    "Holland":  "Netherlands",
+                    "Japan":  "Japan",
+                    "Elfenbenskusten":  "Côte d\u0027Ivoire",
+                    "Equador":  "Ecuador",
+                    "Sverige":  "Sweden",
+                    "Tunisien":  "Tunisia",
+                    "Spanien":  "Spain",
+                    "Kap Verde":  "Cabo Verde",
+                    "Belgien":  "Belgium",
+                    "Egypten":  "Egypt",
+                    "Saudiarabien":  "Saudi Arabia",
+                    "Uruguay":  "Uruguay",
+                    "Urugyay":  "Uruguay",
+                    "Iran":  "IR Iran",
+                    "Nya Zeeland":  "New Zealand",
+                    "Frankrike":  "France",
+                    "Senegal":  "Senegal",
+                    "Irak":  "Iraq",
+                    "Norge":  "Norway",
+                    "Argentina":  "Argentina",
+                    "Algeriet":  "Algeria",
+                    "Österike":  "Austria",
+                    "Jordanien":  "Jordan",
+                    "Portugal":  "Portugal",
+                    "Kongo":  "Congo DR",
+                    "England":  "England",
+                    "Kroatien":  "Croatia",
+                    "Ghana":  "Ghana",
+                    "Panama":  "Panama",
+                    "Uzbekistan":  "Uzbekistan",
+                    "Colombia":  "Colombia"
+                },
+    "groupStage":  [
+                       {
+                           "homeSv":  "Mexico",
+                           "awaySv":  "Sydafrika",
+                           "homeEn":  "Mexico",
+                           "awayEn":  "South Africa",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "X",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Sydkorea",
+                           "awaySv":  "Tjeckien",
+                           "homeEn":  "Korea Republic",
+                           "awayEn":  "Czechia",
+                           "picks":  {
+                                         "Ramen":  "X",
+                                         "Richard":  "1",
+                                         "Robban":  "X",
+                                         "Zerian":  "X",
+                                         "Mattias":  "X",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "X",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Kanada",
+                           "awaySv":  "Bosnien",
+                           "homeEn":  "Canada",
+                           "awayEn":  "Bosnia and Herzegovina",
+                           "picks":  {
+                                         "Ramen":  "X",
+                                         "Richard":  "X",
+                                         "Robban":  "X",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "X",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "USA",
+                           "awaySv":  "Paraguay",
+                           "homeEn":  "USA",
+                           "awayEn":  "Paraguay",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Qatar",
+                           "awaySv":  "Schweiz",
+                           "homeEn":  "Qatar",
+                           "awayEn":  "Switzerland",
+                           "picks":  {
+                                         "Ramen":  "2",
+                                         "Richard":  "2",
+                                         "Robban":  "2",
+                                         "Zerian":  "2",
+                                         "Mattias":  "2",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Brasilien",
+                           "awaySv":  "Marocko",
+                           "homeEn":  "Brazil",
+                           "awayEn":  "Morocco",
+                           "picks":  {
+                                         "Ramen":  "X",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "X",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "X",
+                                         "Nichlas":  "X",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Haiti",
+                           "awaySv":  "Scottland",
+                           "homeEn":  "Haiti",
+                           "awayEn":  "Scotland",
+                           "picks":  {
+                                         "Ramen":  "X",
+                                         "Richard":  "2",
+                                         "Robban":  "2",
+                                         "Zerian":  "2",
+                                         "Mattias":  "2",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Australien",
+                           "awaySv":  "Turkiet",
+                           "homeEn":  "Australia",
+                           "awayEn":  "Türkiye",
+                           "picks":  {
+                                         "Ramen":  "2",
+                                         "Richard":  "2",
+                                         "Robban":  "X",
+                                         "Zerian":  "2",
+                                         "Mattias":  "X",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Tyskland",
+                           "awaySv":  "Curacao",
+                           "homeEn":  "Germany",
+                           "awayEn":  "Curaçao",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Holland",
+                           "awaySv":  "Japan",
+                           "homeEn":  "Netherlands",
+                           "awayEn":  "Japan",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "X",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Elfenbenskusten",
+                           "awaySv":  "Equador",
+                           "homeEn":  "Côte d\u0027Ivoire",
+                           "awayEn":  "Ecuador",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "X",
+                                         "Robban":  "1",
+                                         "Zerian":  "X",
+                                         "Mattias":  "X",
+                                         "Hamze":  "X",
+                                         "Fredrik":  "X",
+                                         "Nichlas":  "X",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Sverige",
+                           "awaySv":  "Tunisien",
+                           "homeEn":  "Sweden",
+                           "awayEn":  "Tunisia",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "2",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Spanien",
+                           "awaySv":  "Kap Verde",
+                           "homeEn":  "Spain",
+                           "awayEn":  "Cabo Verde",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Belgien",
+                           "awaySv":  "Egypten",
+                           "homeEn":  "Belgium",
+                           "awayEn":  "Egypt",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "X",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Saudiarabien",
+                           "awaySv":  "Uruguay",
+                           "homeEn":  "Saudi Arabia",
+                           "awayEn":  "Uruguay",
+                           "picks":  {
+                                         "Ramen":  "2",
+                                         "Richard":  "2",
+                                         "Robban":  "X",
+                                         "Zerian":  "2",
+                                         "Mattias":  "2",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Iran",
+                           "awaySv":  "Nya Zeeland",
+                           "homeEn":  "IR Iran",
+                           "awayEn":  "New Zealand",
+                           "picks":  {
+                                         "Ramen":  "X",
+                                         "Richard":  "X",
+                                         "Robban":  "X",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "X",
+                                         "Nichlas":  "X",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Frankrike",
+                           "awaySv":  "Senegal",
+                           "homeEn":  "France",
+                           "awayEn":  "Senegal",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Irak",
+                           "awaySv":  "Norge",
+                           "homeEn":  "Iraq",
+                           "awayEn":  "Norway",
+                           "picks":  {
+                                         "Ramen":  "2",
+                                         "Richard":  "2",
+                                         "Robban":  "2",
+                                         "Zerian":  "2",
+                                         "Mattias":  "2",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Argentina",
+                           "awaySv":  "Algeriet",
+                           "homeEn":  "Argentina",
+                           "awayEn":  "Algeria",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Österike",
+                           "awaySv":  "Jordanien",
+                           "homeEn":  "Austria",
+                           "awayEn":  "Jordan",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Portugal",
+                           "awaySv":  "Kongo",
+                           "homeEn":  "Portugal",
+                           "awayEn":  "Congo DR",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "England",
+                           "awaySv":  "Kroatien",
+                           "homeEn":  "England",
+                           "awayEn":  "Croatia",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "X",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Ghana",
+                           "awaySv":  "Panama",
+                           "homeEn":  "Ghana",
+                           "awayEn":  "Panama",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "X",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "X",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Uzbekistan",
+                           "awaySv":  "Colombia",
+                           "homeEn":  "Uzbekistan",
+                           "awayEn":  "Colombia",
+                           "picks":  {
+                                         "Ramen":  "2",
+                                         "Richard":  "2",
+                                         "Robban":  "2",
+                                         "Zerian":  "X",
+                                         "Mattias":  "2",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Tjeckien",
+                           "awaySv":  "Sydafrika",
+                           "homeEn":  "Czechia",
+                           "awayEn":  "South Africa",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "X",
+                                         "Robban":  "X",
+                                         "Zerian":  "2",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Schweiz",
+                           "awaySv":  "Bosnien",
+                           "homeEn":  "Switzerland",
+                           "awayEn":  "Bosnia and Herzegovina",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Kanada",
+                           "awaySv":  "Qatar",
+                           "homeEn":  "Canada",
+                           "awayEn":  "Qatar",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "X",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "X",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Mexico",
+                           "awaySv":  "Sydkorea",
+                           "homeEn":  "Mexico",
+                           "awayEn":  "Korea Republic",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "X",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "X",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "USA",
+                           "awaySv":  "Australien",
+                           "homeEn":  "USA",
+                           "awayEn":  "Australia",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "X",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Scottland",
+                           "awaySv":  "Marocko",
+                           "homeEn":  "Scotland",
+                           "awayEn":  "Morocco",
+                           "picks":  {
+                                         "Ramen":  "2",
+                                         "Richard":  "X",
+                                         "Robban":  "X",
+                                         "Zerian":  "2",
+                                         "Mattias":  "2",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Brasilien",
+                           "awaySv":  "Haiti",
+                           "homeEn":  "Brazil",
+                           "awayEn":  "Haiti",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Turkiet",
+                           "awaySv":  "Paraguay",
+                           "homeEn":  "Türkiye",
+                           "awayEn":  "Paraguay",
+                           "picks":  {
+                                         "Ramen":  "X",
+                                         "Richard":  "X",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "X",
+                                         "Nichlas":  "X",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Holland",
+                           "awaySv":  "Sverige",
+                           "homeEn":  "Netherlands",
+                           "awayEn":  "Sweden",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Tyskland",
+                           "awaySv":  "Elfenbenskusten",
+                           "homeEn":  "Germany",
+                           "awayEn":  "Côte d\u0027Ivoire",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "X",
+                                         "Zerian":  "2",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Equador",
+                           "awaySv":  "Curacao",
+                           "homeEn":  "Ecuador",
+                           "awayEn":  "Curaçao",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Tunisien",
+                           "awaySv":  "Japan",
+                           "homeEn":  "Tunisia",
+                           "awayEn":  "Japan",
+                           "picks":  {
+                                         "Ramen":  "2",
+                                         "Richard":  "2",
+                                         "Robban":  "1",
+                                         "Zerian":  "X",
+                                         "Mattias":  "X",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Spanien",
+                           "awaySv":  "Saudiarabien",
+                           "homeEn":  "Spain",
+                           "awayEn":  "Saudi Arabia",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Belgien",
+                           "awaySv":  "Iran",
+                           "homeEn":  "Belgium",
+                           "awayEn":  "IR Iran",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Urugyay",
+                           "awaySv":  "Kap Verde",
+                           "homeEn":  "Uruguay",
+                           "awayEn":  "Cabo Verde",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Nya Zeeland",
+                           "awaySv":  "Egypten",
+                           "homeEn":  "New Zealand",
+                           "awayEn":  "Egypt",
+                           "picks":  {
+                                         "Ramen":  "X",
+                                         "Richard":  "2",
+                                         "Robban":  "2",
+                                         "Zerian":  "2",
+                                         "Mattias":  "2",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Argentina",
+                           "awaySv":  "Österike",
+                           "homeEn":  "Argentina",
+                           "awayEn":  "Austria",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "X",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Frankrike",
+                           "awaySv":  "Irak",
+                           "homeEn":  "France",
+                           "awayEn":  "Iraq",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Norge",
+                           "awaySv":  "Senegal",
+                           "homeEn":  "Norway",
+                           "awayEn":  "Senegal",
+                           "picks":  {
+                                         "Ramen":  "X",
+                                         "Richard":  "X",
+                                         "Robban":  "X",
+                                         "Zerian":  "2",
+                                         "Mattias":  "X",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "X",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Jordanien",
+                           "awaySv":  "Algeriet",
+                           "homeEn":  "Jordan",
+                           "awayEn":  "Algeria",
+                           "picks":  {
+                                         "Ramen":  "2",
+                                         "Richard":  "2",
+                                         "Robban":  "2",
+                                         "Zerian":  "2",
+                                         "Mattias":  "2",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Portugal",
+                           "awaySv":  "Uzbekistan",
+                           "homeEn":  "Portugal",
+                           "awayEn":  "Uzbekistan",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "England",
+                           "awaySv":  "Ghana",
+                           "homeEn":  "England",
+                           "awayEn":  "Ghana",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Panama",
+                           "awaySv":  "Kroatien",
+                           "homeEn":  "Panama",
+                           "awayEn":  "Croatia",
+                           "picks":  {
+                                         "Ramen":  "2",
+                                         "Richard":  "2",
+                                         "Robban":  "2",
+                                         "Zerian":  "2",
+                                         "Mattias":  "2",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Colombia",
+                           "awaySv":  "Kongo",
+                           "homeEn":  "Colombia",
+                           "awayEn":  "Congo DR",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "X",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Schweiz",
+                           "awaySv":  "Kanada",
+                           "homeEn":  "Switzerland",
+                           "awayEn":  "Canada",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "X",
+                                         "Zerian":  "2",
+                                         "Mattias":  "X",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Bosnien",
+                           "awaySv":  "Qatar",
+                           "homeEn":  "Bosnia and Herzegovina",
+                           "awayEn":  "Qatar",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "X",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "X",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Skottland",
+                           "awaySv":  "Brasilien",
+                           "homeEn":  "Scotland",
+                           "awayEn":  "Brazil",
+                           "picks":  {
+                                         "Ramen":  "2",
+                                         "Richard":  "2",
+                                         "Robban":  "X",
+                                         "Zerian":  "2",
+                                         "Mattias":  "2",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Marocko",
+                           "awaySv":  "Haiti",
+                           "homeEn":  "Morocco",
+                           "awayEn":  "Haiti",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "1",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Tjeckien",
+                           "awaySv":  "Mexico",
+                           "homeEn":  "Czechia",
+                           "awayEn":  "Mexico",
+                           "picks":  {
+                                         "Ramen":  "2",
+                                         "Richard":  "2",
+                                         "Robban":  "X",
+                                         "Zerian":  "2",
+                                         "Mattias":  "X",
+                                         "Hamze":  "X",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Sydafrika",
+                           "awaySv":  "Sydkorea",
+                           "homeEn":  "South Africa",
+                           "awayEn":  "Korea Republic",
+                           "picks":  {
+                                         "Ramen":  "X",
+                                         "Richard":  "1",
+                                         "Robban":  "2",
+                                         "Zerian":  "X",
+                                         "Mattias":  "X",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Curacoa",
+                           "awaySv":  "Elfenbenskusten",
+                           "homeEn":  "Curaçao",
+                           "awayEn":  "Côte d\u0027Ivoire",
+                           "picks":  {
+                                         "Ramen":  "2",
+                                         "Richard":  "2",
+                                         "Robban":  "2",
+                                         "Zerian":  "2",
+                                         "Mattias":  "2",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Equador",
+                           "awaySv":  "Tyskland",
+                           "homeEn":  "Ecuador",
+                           "awayEn":  "Germany",
+                           "picks":  {
+                                         "Ramen":  "2",
+                                         "Richard":  "2",
+                                         "Robban":  "X",
+                                         "Zerian":  "1",
+                                         "Mattias":  "2",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Japan",
+                           "awaySv":  "Sverige",
+                           "homeEn":  "Japan",
+                           "awayEn":  "Sweden",
+                           "picks":  {
+                                         "Ramen":  "X",
+                                         "Richard":  "X",
+                                         "Robban":  "2",
+                                         "Zerian":  "X",
+                                         "Mattias":  "X",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "X",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Tunisien",
+                           "awaySv":  "Holland",
+                           "homeEn":  "Tunisia",
+                           "awayEn":  "Netherlands",
+                           "picks":  {
+                                         "Ramen":  "2",
+                                         "Richard":  "2",
+                                         "Robban":  "2",
+                                         "Zerian":  "2",
+                                         "Mattias":  "2",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Turkiet",
+                           "awaySv":  "USA",
+                           "homeEn":  "Türkiye",
+                           "awayEn":  "USA",
+                           "picks":  {
+                                         "Ramen":  "X",
+                                         "Richard":  "1",
+                                         "Robban":  "X",
+                                         "Zerian":  "X",
+                                         "Mattias":  "2",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "X",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Paraguay",
+                           "awaySv":  "Australien",
+                           "homeEn":  "Paraguay",
+                           "awayEn":  "Australia",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "X",
+                                         "Zerian":  "1",
+                                         "Mattias":  "X",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Norge",
+                           "awaySv":  "Frankrike",
+                           "homeEn":  "Norway",
+                           "awayEn":  "France",
+                           "picks":  {
+                                         "Ramen":  "2",
+                                         "Richard":  "2",
+                                         "Robban":  "X",
+                                         "Zerian":  "2",
+                                         "Mattias":  "2",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Senegal",
+                           "awaySv":  "Irak",
+                           "homeEn":  "Senegal",
+                           "awayEn":  "Iraq",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "X",
+                                         "Mattias":  "1",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Kap Verde",
+                           "awaySv":  "Saudiarabien",
+                           "homeEn":  "Cabo Verde",
+                           "awayEn":  "Saudi Arabia",
+                           "picks":  {
+                                         "Ramen":  "2",
+                                         "Richard":  "X",
+                                         "Robban":  "2",
+                                         "Zerian":  "2",
+                                         "Mattias":  "X",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "X",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Urugyay",
+                           "awaySv":  "Spanien",
+                           "homeEn":  "Uruguay",
+                           "awayEn":  "Spain",
+                           "picks":  {
+                                         "Ramen":  "2",
+                                         "Richard":  "2",
+                                         "Robban":  "2",
+                                         "Zerian":  "2",
+                                         "Mattias":  "X",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Egypten",
+                           "awaySv":  "Iran",
+                           "homeEn":  "Egypt",
+                           "awayEn":  "IR Iran",
+                           "picks":  {
+                                         "Ramen":  "X",
+                                         "Richard":  "X",
+                                         "Robban":  "1",
+                                         "Zerian":  "X",
+                                         "Mattias":  "2",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "X",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Nya Zeeland",
+                           "awaySv":  "Belgien",
+                           "homeEn":  "New Zealand",
+                           "awayEn":  "Belgium",
+                           "picks":  {
+                                         "Ramen":  "2",
+                                         "Richard":  "2",
+                                         "Robban":  "2",
+                                         "Zerian":  "2",
+                                         "Mattias":  "2",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Panama",
+                           "awaySv":  "England",
+                           "homeEn":  "Panama",
+                           "awayEn":  "England",
+                           "picks":  {
+                                         "Ramen":  "2",
+                                         "Richard":  "2",
+                                         "Robban":  "2",
+                                         "Zerian":  "2",
+                                         "Mattias":  "2",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Kroatien",
+                           "awaySv":  "Ghana",
+                           "homeEn":  "Croatia",
+                           "awayEn":  "Ghana",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "X",
+                                         "Zerian":  "1",
+                                         "Mattias":  "X",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "1",
+                                         "Nichlas":  "X",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Colombia",
+                           "awaySv":  "Portugal",
+                           "homeEn":  "Colombia",
+                           "awayEn":  "Portugal",
+                           "picks":  {
+                                         "Ramen":  "2",
+                                         "Richard":  "X",
+                                         "Robban":  "X",
+                                         "Zerian":  "2",
+                                         "Mattias":  "X",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Kongo",
+                           "awaySv":  "Uzbekistan",
+                           "homeEn":  "Congo DR",
+                           "awayEn":  "Uzbekistan",
+                           "picks":  {
+                                         "Ramen":  "1",
+                                         "Richard":  "1",
+                                         "Robban":  "1",
+                                         "Zerian":  "X",
+                                         "Mattias":  "X",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "1",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Algeriet",
+                           "awaySv":  "Österike",
+                           "homeEn":  "Algeria",
+                           "awayEn":  "Austria",
+                           "picks":  {
+                                         "Ramen":  "2",
+                                         "Richard":  "X",
+                                         "Robban":  "X",
+                                         "Zerian":  "X",
+                                         "Mattias":  "X",
+                                         "Hamze":  "1",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       },
+                       {
+                           "homeSv":  "Jordanien",
+                           "awaySv":  "Argentina",
+                           "homeEn":  "Jordan",
+                           "awayEn":  "Argentina",
+                           "picks":  {
+                                         "Ramen":  "2",
+                                         "Richard":  "2",
+                                         "Robban":  "2",
+                                         "Zerian":  "2",
+                                         "Mattias":  "2",
+                                         "Hamze":  "2",
+                                         "Fredrik":  "2",
+                                         "Nichlas":  "2",
+                                         "Erik":  ""
+                                     }
+                       }
+                   ],
+    "winnerPicks":  {
+                        "Ramen":  "Argentina",
+                        "Richard":  "England",
+                        "Robban":  "Brasilien",
+                        "Zerian":  "Spanien",
+                        "Mattias":  "Frankrike",
+                        "Hamze":  "Spanien",
+                        "Fredrik":  "Spanien",
+                        "Nichlas":  "Frankrike",
+                        "Erik":  ""
+                    },
+    "actualWinner":  "",
+    "scoring":  {
+                    "groupMatch":  1,
+                    "winnerBonus":  2
+                }
+}

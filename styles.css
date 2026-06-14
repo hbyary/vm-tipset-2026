@@ -1,0 +1,217 @@
+:root {
+  color-scheme: light dark;
+  --bg: #0a4d36;
+  --bg-2: #093d2c;
+  --card: rgba(255, 255, 255, 0.07);
+  --card-solid: #0f5a40;
+  --border: rgba(255, 255, 255, 0.12);
+  --text: #f4f7f5;
+  --muted: #a7c3b5;
+  --accent: #ffd84d;
+  --win: #4ade80;
+  --loss: #f87171;
+  --neutral: #94a3b8;
+  --row-alt: rgba(255, 255, 255, 0.03);
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+a { color: var(--accent); }
+
+.topbar {
+  padding: calc(16px + var(--safe-top)) 16px 12px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+}
+.topbar h1 {
+  font-size: 22px;
+  margin: 0;
+  letter-spacing: 0.4px;
+}
+.topbar .meta {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+section {
+  padding: 16px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.scoreboard h2, .matches h2 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin: 0 0 10px;
+  font-weight: 600;
+}
+
+#scoreboard {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--card-solid);
+  border: 1px solid var(--border);
+}
+#scoreboard li {
+  display: grid;
+  grid-template-columns: 32px 1fr auto auto;
+  gap: 12px;
+  align-items: baseline;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+#scoreboard li:last-child { border-bottom: none; }
+#scoreboard li:nth-child(even) { background: var(--row-alt); }
+#scoreboard li.leader { background: linear-gradient(90deg, rgba(255, 216, 77, 0.18), transparent); }
+#scoreboard .rank {
+  font-weight: 700;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+#scoreboard .name { font-weight: 600; }
+#scoreboard .pts {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+#scoreboard .bonus {
+  font-size: 11px;
+  color: var(--muted);
+}
+.hint {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 8px 4px 0;
+  text-align: center;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+}
+.filter {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.filter.active {
+  background: var(--accent);
+  color: #1a1a1a;
+  border-color: var(--accent);
+}
+
+.match {
+  background: var(--card-solid);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.match-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.match-teams {
+  font-size: 15px;
+  font-weight: 600;
+}
+.match-date {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.match-result {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.match-result.pending {
+  background: transparent;
+  color: var(--muted);
+  font-weight: 400;
+}
+.outcome-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--accent);
+  color: #1a1a1a;
+  margin-left: 6px;
+}
+.picks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 4px;
+  margin-top: 8px;
+}
+.pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px;
+  border-radius: 6px;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.04);
+}
+.pick .who {
+  color: var(--muted);
+  font-size: 10px;
+}
+.pick .what {
+  font-weight: 700;
+  font-size: 14px;
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.pick.correct { background: rgba(74, 222, 128, 0.18); }
+.pick.correct .what { color: var(--win); }
+.pick.wrong { background: rgba(248, 113, 113, 0.12); }
+.pick.wrong .what { color: var(--loss); }
+.pick.empty .what { color: var(--neutral); }
+
+footer {
+  text-align: center;
+  padding: 24px 16px calc(24px + var(--safe-bottom));
+  font-size: 11px;
+  color: var(--muted);
+}
+footer a { color: var(--muted); }

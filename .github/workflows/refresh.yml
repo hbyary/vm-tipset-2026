@@ -1,0 +1,46 @@
+name: Refresh fixtures
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"   # every 30 minutes
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-fixtures
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch fixturedownload feed
+        run: |
+          mkdir -p data
+          curl --fail --silent --show-error \
+            -H "User-Agent: vm-tipset-refresh" \
+            "https://fixturedownload.com/feed/json/fifa-world-cup-2026" \
+            -o /tmp/feed.json
+          test -s /tmp/feed.json
+          jq -n \
+            --arg fetchedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg source "https://fixturedownload.com/feed/json/fifa-world-cup-2026" \
+            --slurpfile m /tmp/feed.json \
+            '{fetchedAt: $fetchedAt, source: $source, matches: $m[0]}' \
+            > data/fixtures.json
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "vm-tipset-bot"
+          git config user.email "bot@users.noreply.github.com"
+          if git diff --quiet -- data/fixtures.json; then
+            echo "No changes."
+          else
+            git add data/fixtures.json
+            git commit -m "chore: refresh fixtures $(date -u +%Y-%m-%dT%H:%MZ)"
+            git push
+          fi
