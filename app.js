@@ -27,12 +27,23 @@ const state = {
   teams: {},
   live: {},
   liveFetchedAt: null,
+  lastChecked: null,
   filter: "all",
   tab: "home",
 };
 
+const FD_TO_ESPN = {
+  "Bosnia and Herzegovina": "Bosnia-Herzegovina",
+  "Cabo Verde": "Cape Verde",
+  "Côte d'Ivoire": "Ivory Coast",
+  "IR Iran": "Iran",
+  "Korea Republic": "South Korea",
+  "USA": "United States",
+};
 function teamLogo(name) {
-  return state.teams[name]?.logo || null;
+  if (!name) return null;
+  const t = state.teams[name] || state.teams[FD_TO_ESPN[name]];
+  return t?.logo || null;
 }
 function teamLogoHtml(name, cls = "") {
   const url = teamLogo(name);
@@ -70,6 +81,7 @@ async function load() {
   state.picks = picks;
   state.fixtures = fixtures;
   state.teams = teams;
+  state.lastChecked = Date.now();
   render();
 }
 
@@ -129,13 +141,28 @@ document.addEventListener("visibilitychange", () => {
     pollLive();
   }
 });
-setInterval(refresh, 60_000);
-setInterval(pollLive, 30_000);
+// Slow refresh of static data every 30 minutes
+setInterval(refresh, 30 * 60_000);
+// Live poll: every 10s while a match is in window, otherwise idle
+let livePollTimer = null;
+function tuneLivePoll() {
+  const fast = liveWindowActive();
+  const interval = fast ? 10_000 : 5 * 60_000;
+  if (livePollTimer) clearInterval(livePollTimer);
+  livePollTimer = setInterval(pollLive, interval);
+}
+setInterval(tuneLivePoll, 60_000);
+tuneLivePoll();
 
 function findFixture(homeEn, awayEn) {
   return state.fixtures.matches.find(
     (m) => m.HomeTeam === homeEn && m.AwayTeam === awayEn,
   );
+}
+
+function isMagnusMatch(m) {
+  const a = new Set([m.homeEn, m.awayEn]);
+  return a.has("Sweden") && a.has("Japan");
 }
 
 const ESPN_ALIAS = {
@@ -304,6 +331,7 @@ function renderMatches() {
           </div>`;
         })
         .join("");
+      const magnusBadge = isMagnusMatch(m) ? `<span class="magnus-badge" title="Magnus är på plats!">🎟️ Magnus on tour</span>` : "";
       return `<article class="${articleClass}" data-idx="${idx}">
         <div class="match-head">
           <div class="match-teams">
@@ -311,6 +339,7 @@ function renderMatches() {
           </div>
           ${dateOrClock}
         </div>
+        ${magnusBadge}
         <div class="picks">${picksHtml}</div>
       </article>`;
     })
@@ -320,14 +349,14 @@ function renderMatches() {
 }
 
 function renderUpdated() {
-  if (!state.fixtures?.fetchedAt) return;
-  const d = new Date(state.fixtures.fetchedAt);
-  $("#updated").textContent = `Uppdaterad ${d.toLocaleString("sv-SE", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  })}`;
+  const latest = state.liveFetchedAt || state.lastChecked;
+  if (!latest) return;
+  const d = new Date(latest);
+  const t = d.toLocaleString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+  const fixt = state.fixtures?.fetchedAt ? new Date(state.fixtures.fetchedAt) : null;
+  const dataAge = fixt ? Math.round((Date.now() - fixt.getTime()) / 60_000) : null;
+  const ageTxt = dataAge != null && dataAge < 120 ? ` · senaste data ${dataAge}m gammal` : "";
+  $("#updated").textContent = `Synkad ${t}${ageTxt}`;
 }
 
 function computeGroupTables() {
@@ -433,12 +462,62 @@ function playerStats(player) {
   return { pts: pts + (winnerHit ? 2 : 0), hits, misses, blanks, winnerPick, winnerHit, rows };
 }
 
+function playerPatterns(name) {
+  const rows = state.picks.groupStage.map((m) => ({ m, pick: m.picks[name] || "" }));
+  const picked = rows.filter((r) => r.pick);
+  const total = picked.length || 1;
+  const counts = { "1": 0, X: 0, "2": 0 };
+  for (const r of picked) counts[r.pick] = (counts[r.pick] || 0) + 1;
+  const pct = (n) => Math.round((100 * n) / total);
+
+  let homeStrong = 0, awayStrong = 0;
+  for (const r of picked) {
+    if (r.pick === "1") homeStrong++;
+    else if (r.pick === "2") awayStrong++;
+  }
+  let agree = 0, disagree = 0;
+  for (const r of picked) {
+    const others = state.picks.players.filter((p) => p !== name).map((p) => r.m.picks[p]).filter(Boolean);
+    if (!others.length) continue;
+    const majority = ["1", "X", "2"].sort((a, b) => others.filter((o) => o === b).length - others.filter((o) => o === a).length)[0];
+    if (r.pick === majority) agree++;
+    else disagree++;
+  }
+
+  const profile = [];
+  if (counts["1"] / total > 0.55) profile.push("hemmastark");
+  else if (counts["2"] / total > 0.35) profile.push("bortavänlig");
+  if (counts["X"] / total > 0.20) profile.push("kryss-orienterad");
+  if (disagree > agree) profile.push("kontrarisk");
+  else profile.push("följer marknadens linje");
+
+  const winner = state.picks.winnerPicks[name] || "ingen";
+  const stats = playerStats(name);
+  const playedRows = stats.rows.filter((r) => r.outcome != null);
+  const hitRate = playedRows.length ? Math.round((100 * stats.hits) / playedRows.length) : null;
+
+  let verdict = "";
+  if (!picked.length) verdict = `${name} har inte lämnat några tips.`;
+  else {
+    const parts = [
+      `${name} tippar 1 i ${pct(counts["1"])}% av matcherna, X i ${pct(counts.X)}%, och 2 i ${pct(counts["2"])}% — vilket ger en ${profile.slice(0, 2).join(", ") || "balanserad"} profil.`,
+      `Avviker från majoriteten i ${disagree} av ${total} matcher.`,
+      hitRate != null
+        ? `Träffsäkerhet hittills: ${hitRate}% (${stats.hits}/${playedRows.length}).`
+        : "Inga matcher avgjorda än.",
+      `VM-vinnartips: ${winner}.`,
+    ];
+    verdict = parts.join(" ");
+  }
+  return { counts, pct, profile, agree, disagree, hitRate, winner, verdict };
+}
+
 function openPlayer(name) {
   const st = playerStats(name);
+  const pat = playerPatterns(name);
   const items = st.rows
     .filter((r) => r.pick)
     .map((r) => {
-      const dateStr = r.f?.DateUtc ? formatDate(r.f.DateUtc) : "";
       const scoreStr = r.outcome != null ? `${r.home}–${r.away}` : "vs";
       return `<li class="player-row ${r.status}">
         <span class="pr-pick">${r.pick}</span>
@@ -447,14 +526,30 @@ function openPlayer(name) {
       </li>`;
     })
     .join("");
+  const dist = `
+    <div class="pat-dist">
+      <div class="pat-cell"><span class="pat-lbl">1</span><span class="pat-val">${pat.counts["1"]}</span><span class="pat-pct">${pat.pct(pat.counts["1"])}%</span></div>
+      <div class="pat-cell"><span class="pat-lbl">X</span><span class="pat-val">${pat.counts.X}</span><span class="pat-pct">${pat.pct(pat.counts.X)}%</span></div>
+      <div class="pat-cell"><span class="pat-lbl">2</span><span class="pat-val">${pat.counts["2"]}</span><span class="pat-pct">${pat.pct(pat.counts["2"])}%</span></div>
+    </div>`;
   document.getElementById("player-body").innerHTML = `
     <header class="detail-header">
-      <div class="detail-teams">${name}</div>
-      <div class="detail-meta">
-        <span class="detail-score">${st.pts} p</span>
-        <span class="player-stats">${st.hits} rätt · ${st.misses} fel · ${st.blanks} blank</span>
+      <div class="player-hero">
+        <span class="avatar lg" style="${playerPalette(name)}">${playerInitial(name)}</span>
+        <div>
+          <div class="detail-teams">${name}</div>
+          <div class="detail-meta">
+            <span class="detail-score">${st.pts} p</span>
+            <span class="player-stats">${st.hits} rätt · ${st.misses} fel · ${st.blanks} blank</span>
+          </div>
+        </div>
       </div>
     </header>
+    <section class="detail-section">
+      <h3>Tipsprofil</h3>
+      <p class="se-verdict">${pat.verdict}</p>
+      ${dist}
+    </section>
     <section class="detail-section">
       <h3>VM-vinnare-tips</h3>
       <p class="winner-pick ${st.winnerHit ? "correct" : ""}">${st.winnerPick || "–"}</p>
@@ -473,7 +568,205 @@ function switchTab(tab) {
   document.querySelectorAll(".view").forEach((v) => (v.hidden = v.id !== `view-${tab}`));
   if (tab === "groups") renderGroups();
   if (tab === "knockout") renderKnockout();
+  if (tab === "sweden") renderSweden();
+  if (tab === "highlights") renderHighlights();
   window.scrollTo(0, 0);
+}
+
+function swedenMatches() {
+  return state.picks.groupStage
+    .map((m, idx) => ({ m, idx, f: findFixture(m.homeEn, m.awayEn) }))
+    .filter(({ m }) => m.homeEn === "Sweden" || m.awayEn === "Sweden")
+    .sort((a, b) => new Date(a.f?.DateUtc || 0) - new Date(b.f?.DateUtc || 0));
+}
+
+function swedenAnalysis() {
+  const games = swedenMatches();
+  let played = 0, pts = 0, gf = 0, ga = 0;
+  const remaining = [];
+  for (const { m, f } of games) {
+    const { home, away } = resolvedScores(m);
+    if (home == null || away == null) { remaining.push({ m, f }); continue; }
+    played++;
+    const isHome = m.homeEn === "Sweden";
+    const swe = isHome ? home : away;
+    const opp = isHome ? away : home;
+    gf += swe; ga += opp;
+    if (swe > opp) pts += 3;
+    else if (swe === opp) pts += 1;
+  }
+  const remCount = remaining.length;
+  const maxRemPts = remCount * 3;
+  const projMax = pts + maxRemPts;
+  // Group F table
+  const tables = computeGroupTables();
+  const grpF = tables["Group F"] || [];
+  const sweRow = grpF.find((r) => r.name === "Sweden");
+  const sweRank = sweRow ? grpF.indexOf(sweRow) + 1 : null;
+
+  // Build narrative
+  let verdict;
+  if (played === 0) {
+    verdict = `Sverige spelar 3 matcher i Grupp F mot ${games.map(g => g.m.homeEn === "Sweden" ? g.m.awaySv : g.m.homeSv).join(", ")}. Historiskt brukar 4–5 poäng räcka för andraplatsen och 7 poäng säkrar gruppen.`;
+  } else if (played === 3) {
+    if (sweRank && sweRank <= 2) verdict = `Klart för slutspelet som ${sweRank === 1 ? "gruppvinnare" : "tvåa"} i Grupp F med ${pts} poäng (${gf}-${ga}).`;
+    else verdict = `Slutade ${sweRank}:a i gruppen med ${pts} poäng. Kvalificering som "bästa trea" kräver att andra grupper inte presterar bättre.`;
+  } else {
+    const need4 = Math.max(0, 4 - pts);
+    const need7 = Math.max(0, 7 - pts);
+    const can4 = need4 <= maxRemPts;
+    const can7 = need7 <= maxRemPts;
+    const lines = [
+      `Spelade: ${played}/3 · ${pts} p · mål ${gf}-${ga} · grupp-${sweRank || "?"}.`,
+      can7
+        ? `För gruppvinst: behöver ${need7} p av ${maxRemPts} möjliga (${need7 === 0 ? "redan klart" : `${need7 === 3 ? "1 V" : need7 === 4 ? "1 V + 1 O" : need7 === 6 ? "2 V" : need7 + " p"}`}).`
+        : `Gruppvinst inte längre matematiskt möjlig.`,
+      can4
+        ? `För andraplats: behöver ${need4} p (typisk gräns 4 p).`
+        : `Andraplats osäker, behöver bästa-trea-formel.`,
+      `Max möjligt: ${projMax} p.`,
+    ];
+    verdict = lines.join(" ");
+  }
+
+  return { played, pts, gf, ga, remaining, sweRank, verdict, grpF };
+}
+
+function renderSweden() {
+  const games = swedenMatches();
+  if (!games.length) {
+    document.getElementById("sweden").innerHTML = `<p class="hint">Inga Sverige-matcher i schemat.</p>`;
+    return;
+  }
+  const ana = swedenAnalysis();
+
+  const matchCards = games
+    .map(({ m, idx, f }) => {
+      const { home, away } = resolvedScores(m);
+      const live = findLive(m.homeEn, m.awayEn);
+      const isLive = live?.state === "in";
+      let scoreLine;
+      if (isLive) scoreLine = `<span class="se-score live">${live.homeScore}–${live.awayScore} · ${live.clock}</span>`;
+      else if (home != null) scoreLine = `<span class="se-score">${home}–${away}</span>`;
+      else scoreLine = `<span class="se-score pending">${f?.DateUtc ? formatDate(f.DateUtc) : ""}</span>`;
+      const magnusBadge = isMagnusMatch(m) ? `<span class="magnus-badge">🎟️ Magnus on tour</span>` : "";
+      return `<article class="match" data-idx="${idx}">
+        <div class="match-head">
+          <div class="match-teams">
+            ${teamLogoHtml(m.homeEn)} ${m.homeSv} – ${m.awaySv} ${teamLogoHtml(m.awayEn)}
+          </div>
+          ${scoreLine}
+        </div>
+        ${magnusBadge}
+      </article>`;
+    })
+    .join("");
+
+  const tableRows = ana.grpF
+    .map(
+      (r, i) => `<tr class="${i < 2 ? "q-top2" : i === 2 ? "q-third" : ""} ${r.name === "Sweden" ? "is-sweden" : ""}">
+        <td class="pos">${i + 1}</td>
+        <td class="team">${teamLogoHtml(r.name, "sm")} ${r.sv}</td>
+        <td>${r.p}</td>
+        <td>${r.w}</td>
+        <td>${r.d}</td>
+        <td>${r.l}</td>
+        <td>${r.gf}-${r.ga}</td>
+        <td class="pts">${r.pts}</td>
+      </tr>`,
+    )
+    .join("");
+
+  document.getElementById("sweden").innerHTML = `
+    <section class="se-summary">
+      <div class="se-kpi">
+        <span class="se-kpi-lbl">Poäng</span>
+        <span class="se-kpi-val">${ana.pts}</span>
+      </div>
+      <div class="se-kpi">
+        <span class="se-kpi-lbl">Mål</span>
+        <span class="se-kpi-val">${ana.gf}-${ana.ga}</span>
+      </div>
+      <div class="se-kpi">
+        <span class="se-kpi-lbl">Position</span>
+        <span class="se-kpi-val">${ana.sweRank ? ana.sweRank + ":a" : "–"}</span>
+      </div>
+    </section>
+    <section class="detail-section">
+      <h3>Prognos</h3>
+      <p class="se-verdict">${ana.verdict}</p>
+    </section>
+    <section class="detail-section">
+      <h3>Sveriges matcher</h3>
+      <div>${matchCards}</div>
+    </section>
+    <section class="detail-section">
+      <h3>Grupp F</h3>
+      <div class="group-card" style="margin:0">
+        <table class="group-table">
+          <thead><tr><th></th><th>Lag</th><th>S</th><th>V</th><th>O</th><th>F</th><th>Mål</th><th>P</th></tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
+    </section>
+  `;
+}
+
+async function renderHighlights() {
+  const container = document.getElementById("highlights");
+  const playedGames = state.picks.groupStage
+    .map((m, idx) => ({ m, idx, f: findFixture(m.homeEn, m.awayEn) }))
+    .filter(({ f }) => f?.HomeTeamScore != null && f?.AwayTeamScore != null)
+    .sort((a, b) => new Date(b.f.DateUtc) - new Date(a.f.DateUtc));
+  if (!playedGames.length) {
+    container.innerHTML = `<p class="hint">Inga spelade matcher än.</p>`;
+    return;
+  }
+
+  container.innerHTML = `<p class="hint">Hämtar höjdpunkter för ${playedGames.length} matcher…</p>`;
+  const groups = [];
+  for (const { m, idx, f } of playedGames) {
+    try {
+      const eid = await getEventId(m.homeEn, m.awayEn, f.DateUtc);
+      if (!eid) continue;
+      const summary = await getSummary(eid);
+      const videos = (summary.videos || []).filter((v) => v.links?.source?.href);
+      if (!videos.length) continue;
+      groups.push({ m, idx, f, videos });
+    } catch (e) {
+      console.warn("highlight fetch failed for match", idx, e);
+    }
+  }
+  if (!groups.length) {
+    container.innerHTML = `<p class="hint">Inga videoklipp tillgängliga än.</p>`;
+    return;
+  }
+  container.innerHTML = groups
+    .map(({ m, idx, f, videos }) => {
+      const score = `${f.HomeTeamScore}–${f.AwayTeamScore}`;
+      const items = videos
+        .map((v) => {
+          const src = v.links.source.href;
+          const poster = v.thumbnail || "";
+          const dur = v.duration ? `${v.duration}s` : "";
+          return `<figure class="hl">
+            <video class="hl-video" controls preload="none" playsinline poster="${poster}" src="${src}"></video>
+            <figcaption class="hl-cap">
+              <span class="hl-title">${v.headline || ""}</span>
+              <span class="hl-dur">${dur}</span>
+            </figcaption>
+          </figure>`;
+        })
+        .join("");
+      return `<section class="hl-match" data-open-match="${idx}">
+        <div class="hl-match-head">
+          <span class="hl-match-teams">${teamLogoHtml(m.homeEn, "sm")} ${m.homeSv} ${score} ${m.awaySv} ${teamLogoHtml(m.awayEn, "sm")}</span>
+          <span class="hl-match-date">${formatDate(f.DateUtc)}</span>
+        </div>
+        <div class="hl-grid">${items}</div>
+      </section>`;
+    })
+    .join("");
 }
 
 const KO_ROUNDS = [
@@ -519,11 +812,58 @@ function renderKnockout() {
   `;
 }
 
+function renderHero() {
+  const el = document.getElementById("hero");
+  if (!el) return;
+  const all = state.picks.groupStage
+    .map((m) => ({ m, f: findFixture(m.homeEn, m.awayEn) }))
+    .filter((x) => x.f?.DateUtc);
+  const now = Date.now();
+
+  const liveOne = all.find(({ m }) => findLive(m.homeEn, m.awayEn)?.state === "in");
+  if (liveOne) {
+    const live = findLive(liveOne.m.homeEn, liveOne.m.awayEn);
+    el.innerHTML = `<div class="hero-card live-card">
+      <div class="hero-tag"><span class="live-dot"></span>Live nu</div>
+      <div class="hero-match">
+        ${teamLogoHtml(liveOne.m.homeEn)} ${liveOne.m.homeSv}
+        <span class="hero-score">${live.homeScore}–${live.awayScore}</span>
+        ${liveOne.m.awaySv} ${teamLogoHtml(liveOne.m.awayEn)}
+      </div>
+      <div class="hero-sub">${live.clock || ""}</div>
+    </div>`;
+    return;
+  }
+
+  const next = all
+    .filter((x) => new Date(x.f.DateUtc).getTime() > now)
+    .sort((a, b) => new Date(a.f.DateUtc) - new Date(b.f.DateUtc))[0];
+  if (!next) {
+    el.innerHTML = "";
+    return;
+  }
+  const ms = new Date(next.f.DateUtc).getTime() - now;
+  const hours = Math.floor(ms / 3_600_000);
+  const days = Math.floor(hours / 24);
+  const countdown = days > 0 ? `om ${days}d ${hours % 24}h` : hours > 0 ? `om ${hours}h ${Math.floor((ms % 3_600_000) / 60_000)}m` : `om ${Math.floor(ms / 60_000)} min`;
+  el.innerHTML = `<div class="hero-card">
+    <div class="hero-tag">Nästa match · ${countdown}</div>
+    <div class="hero-match">
+      ${teamLogoHtml(next.m.homeEn)} ${next.m.homeSv}
+      <span class="hero-vs">vs</span>
+      ${next.m.awaySv} ${teamLogoHtml(next.m.awayEn)}
+    </div>
+    <div class="hero-sub">${formatDate(next.f.DateUtc)} · ${next.f.Location || ""}</div>
+  </div>`;
+}
+
 function render() {
   const scores = computeScores();
   renderScoreboard(scores);
+  renderHero();
   renderMatches();
   if (state.tab === "groups") renderGroups();
+  if (state.tab === "sweden") renderSweden();
   renderUpdated();
 }
 
@@ -717,6 +1057,17 @@ function detailVenueHtml(summary) {
   return `<p class="detail-venue">📍 ${where}</p>`;
 }
 
+function collapsible(title, innerHtml) {
+  if (!innerHtml?.trim()) return "";
+  const stripped = innerHtml.replace(/<section class="detail-section">|<\/section>$/g, "");
+  const idx = stripped.indexOf("<h3>");
+  const body = idx >= 0 ? stripped.replace(/<h3>[\s\S]*?<\/h3>/, "") : stripped;
+  return `<details class="collapsible">
+    <summary><span class="col-title">${title}</span><span class="col-chevron">▾</span></summary>
+    <div class="col-body">${body}</div>
+  </details>`;
+}
+
 function detailOurPicksHtml(m, outcome) {
   const cells = state.picks.players
     .map((p) => {
@@ -782,14 +1133,14 @@ async function openDetail(idx) {
     const summary = await getSummary(eid);
     const oddsObj = summary.pickcenter?.[0] || summary.odds?.[0];
     document.getElementById("detail-extra").innerHTML = `
-      ${detailArticleHtml(summary)}
-      ${detailHighlightsHtml(summary)}
       ${detailOddsHtml(oddsObj)}
       ${detailProbabilityHtml(oddsObj, m)}
       ${detailFormHtml(summary)}
-      ${detailH2HHtml(summary)}
-      ${detailEventsHtml(summary)}
-      ${detailNewsHtml(summary, m)}
+      ${detailHighlightsHtml(summary)}
+      ${collapsible("Analys", detailArticleHtml(summary))}
+      ${collapsible("Head-to-head", detailH2HHtml(summary))}
+      ${collapsible("Händelser", detailEventsHtml(summary))}
+      ${collapsible("Nyheter", detailNewsHtml(summary, m))}
       ${detailVenueHtml(summary)}
     `;
   } catch (err) {

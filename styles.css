@@ -538,6 +538,40 @@ footer a { color: var(--muted); }
 .h2h-vs { color: var(--text-soft); }
 .h2h-score { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--accent); }
 
+/* Collapsibles */
+.collapsible {
+  margin: 14px 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.collapsible > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  font-weight: 700;
+  user-select: none;
+}
+.collapsible > summary::-webkit-details-marker { display: none; }
+.col-chevron {
+  font-size: 14px;
+  transition: transform 0.2s ease;
+  color: var(--accent);
+}
+.collapsible[open] .col-chevron { transform: rotate(180deg); }
+.col-body {
+  padding: 0 14px 14px;
+  border-top: 1px solid var(--border);
+}
+
 /* Analysis */
 .analysis-card {
   display: flex;
@@ -574,6 +608,157 @@ footer a { color: var(--muted); }
   text-decoration: none;
 }
 .analysis-link:active { opacity: 0.7; }
+
+/* Hero card on landing */
+.hero { padding-top: 16px; padding-bottom: 0; }
+.hero-card {
+  position: relative;
+  padding: 18px 18px;
+  border-radius: 18px;
+  background:
+    radial-gradient(800px 200px at 20% 0%, rgba(250, 204, 21, 0.18), transparent 70%),
+    linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+.hero-card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(250, 204, 21, 0.35), rgba(129, 140, 248, 0.15), transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  padding: 1px;
+  pointer-events: none;
+}
+.hero-card.live-card { background: radial-gradient(800px 200px at 80% 0%, rgba(239, 68, 68, 0.25), transparent 70%), linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); }
+.hero-tag {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.hero-match {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  flex-wrap: wrap;
+}
+.hero-vs { color: var(--muted); font-weight: 600; font-size: 14px; }
+.hero-score {
+  font-size: 22px;
+  color: var(--accent);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 10px;
+  border-radius: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.hero-sub {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+/* Magnus easter egg */
+.magnus-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0b1220;
+  background: linear-gradient(135deg, #fde68a 0%, #facc15 100%);
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin: 6px 0 8px;
+  box-shadow: 0 2px 10px rgba(250, 204, 21, 0.25);
+}
+
+/* Sweden tab */
+.se-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.se-kpi {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 8px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+.se-kpi-lbl {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+.se-kpi-val {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  margin-top: 4px;
+}
+.se-verdict {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-soft);
+  margin: 0;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, rgba(250, 204, 21, 0.08) 0%, transparent 100%);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 12px;
+}
+.se-score {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding: 4px 10px;
+  background: rgba(0,0,0,0.25);
+  border-radius: 8px;
+  color: var(--accent);
+}
+.se-score.live { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+.se-score.pending { background: transparent; color: var(--muted); font-weight: 500; }
+tr.is-sweden { background: linear-gradient(90deg, rgba(250, 204, 21, 0.12), transparent) !important; }
+tr.is-sweden td { font-weight: 700; }
+
+/* Highlights tab */
+.hl-match {
+  margin-bottom: 18px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+}
+.hl-match-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+.hl-match-teams { font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+.hl-match-date { color: var(--muted); font-size: 11px; }
 
 /* Highlights */
 .hl-grid {
@@ -918,3 +1103,28 @@ footer a { color: var(--muted); }
   color: var(--muted);
   font-size: 12px;
 }
+
+.player-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.avatar.lg { width: 56px; height: 56px; font-size: 22px; }
+.pat-dist {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+.pat-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.pat-lbl { font-size: 11px; color: var(--muted); font-weight: 600; }
+.pat-val { font-size: 22px; font-weight: 800; color: var(--accent); margin-top: 2px; }
+.pat-pct { font-size: 11px; color: var(--text-soft); font-weight: 600; }
