@@ -30,6 +30,7 @@ const state = {
   lastChecked: null,
   filter: "all",
   tab: "home",
+  koRound: 4,
 };
 
 const FD_TO_ESPN = {
@@ -320,55 +321,73 @@ function renderMatches() {
     return da - db;
   });
 
+  let lastDay = null;
   const html = filtered
-    .map(({ idx, m, f, live, isLive, liveHome, liveAway, homeScore, awayScore, outcome, played }) => {
-      let score, dateOrClock, articleClass = "";
-      if (isLive) {
-        articleClass = "match live";
-        score = `<span class="match-result live">${liveHome}–${liveAway}</span>`;
-        const clock = live.clock || `${live.period}'`;
-        dateOrClock = `<span class="live-badge"><span class="live-dot"></span>LIVE · ${clock}</span>`;
-      } else if (played) {
-        articleClass = "match";
-        score = `<span class="match-result">${homeScore}–${awayScore}</span>`;
-        dateOrClock = `<span class="match-date">${f?.DateUtc ? formatDate(f.DateUtc) : ""}</span>`;
-      } else {
-        articleClass = "match";
-        score = `<span class="match-result pending">vs</span>`;
-        dateOrClock = `<span class="match-date">${f?.DateUtc ? formatDate(f.DateUtc) : ""}</span>`;
+    .map((row) => {
+      let block = "";
+      const dayKey = row.f?.DateUtc ? new Date(row.f.DateUtc).toISOString().slice(0, 10) : "tbd";
+      if (dayKey !== lastDay) {
+        lastDay = dayKey;
+        block += `<div class="day-divider">${dayLabel(row.f?.DateUtc)}</div>`;
       }
-      const outcomeBadge = played && !isLive ? `<span class="outcome-badge">${outcome}</span>` : "";
-      const picksHtml = picks.players
-        .map((p) => {
-          const pick = m.picks[p] || "";
-          const cls = !pick
-            ? "empty"
-            : outcome == null
-              ? ""
-              : pick === outcome
-                ? "correct"
-                : "wrong";
-          return `<div class="pick ${cls}">
-            <span class="who">${p}</span>
-            <span class="what">${pick || "–"}</span>
-          </div>`;
-        })
-        .join("");
-      const magnusBadge = isMagnusMatch(m) ? `<span class="magnus-badge" title="Magnus är på plats!">🎟️ Magnus on tour</span>` : "";
-      return `<article class="${articleClass}" data-idx="${idx}">
-        <div class="match-head">
-          <div class="match-teams">
-            ${teamLogoHtml(m.homeEn)} ${m.homeSv} – ${m.awaySv} ${teamLogoHtml(m.awayEn)} ${score} ${outcomeBadge}
-          </div>
-          ${dateOrClock}
-        </div>
-        ${magnusBadge}
-        <div class="picks">${picksHtml}</div>
-      </article>`;
+      return block + matchCardHtml(row);
     })
     .join("");
 
-  $("#matches").innerHTML = html || `<p style="color:var(--muted)">Inga matcher.</p>`;
+  $("#matches").innerHTML = html || `<p class="empty-state">Inga matcher i denna vy.</p>`;
+}
+
+function dayLabel(iso) {
+  if (!iso) return "Datum TBD";
+  const d = new Date(iso);
+  const today = new Date();
+  const toKey = (x) => x.toISOString().slice(0, 10);
+  const dayMs = 86400000;
+  const diff = Math.round((new Date(toKey(d)) - new Date(toKey(today))) / dayMs);
+  if (diff === 0) return "Idag";
+  if (diff === 1) return "Imorgon";
+  if (diff === -1) return "Igår";
+  return d.toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" });
+}
+
+function matchCardHtml(row) {
+  const { idx, m, f, live, isLive, homeScore, awayScore, outcome, played } = row;
+  const picks = state.picks;
+  const time = f?.DateUtc
+    ? new Date(f.DateUtc).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })
+    : "";
+  let center, articleClass = "match";
+  if (isLive) {
+    articleClass = "match live";
+    center = `<div class="mc-score live">${live.homeScore}–${live.awayScore}</div><div class="mc-status"><span class="live-dot"></span>${live.clock || ""}</div>`;
+  } else if (played) {
+    center = `<div class="mc-score">${homeScore}–${awayScore}</div><div class="mc-status res-${outcome}">${outcome}</div>`;
+  } else {
+    center = `<div class="mc-time">${time}</div><div class="mc-status">kommande</div>`;
+  }
+  const picksHtml = picks.players
+    .map((p) => {
+      const pick = m.picks[p] || "";
+      const cls = !pick ? "empty" : outcome == null ? "" : pick === outcome ? "correct" : "wrong";
+      return `<div class="pick ${cls}"><span class="who">${p}</span><span class="what">${pick || "–"}</span></div>`;
+    })
+    .join("");
+  const magnusBadge = isMagnusMatch(m) ? `<div class="magnus-badge">🎟️ Magnus on tour</div>` : "";
+  return `<article class="${articleClass}" data-idx="${idx}">
+    <div class="mc-fixture">
+      <div class="mc-team home">
+        ${teamLogoHtml(m.homeEn)}
+        <span class="mc-name">${m.homeSv}</span>
+      </div>
+      <div class="mc-center">${center}</div>
+      <div class="mc-team away">
+        <span class="mc-name">${m.awaySv}</span>
+        ${teamLogoHtml(m.awayEn)}
+      </div>
+    </div>
+    ${magnusBadge}
+    <div class="picks">${picksHtml}</div>
+  </article>`;
 }
 
 function renderUpdated() {
@@ -587,7 +606,7 @@ function openPlayer(name) {
 
 function switchTab(tab) {
   state.tab = tab;
-  document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
+  document.querySelectorAll(".navbtn").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
   document.querySelectorAll(".view").forEach((v) => (v.hidden = v.id !== `view-${tab}`));
   if (tab === "groups") renderGroups();
   if (tab === "knockout") renderKnockout();
@@ -746,7 +765,7 @@ async function renderHighlights() {
     return;
   }
 
-  container.innerHTML = `<p class="hint">Hämtar höjdpunkter för ${playedGames.length} matcher…</p>`;
+  container.innerHTML = `<div class="skel skel-card"></div><div class="skel skel-card"></div>`;
   const groups = [];
   for (const { m, idx, f } of playedGames) {
     try {
@@ -793,45 +812,69 @@ async function renderHighlights() {
 }
 
 const KO_ROUNDS = [
-  { round: 2, label: "32-delsfinaler", short: "32-final" },
-  { round: 3, label: "Åttondelsfinaler", short: "16-final" },
-  { round: 4, label: "Kvartsfinaler", short: "Kvart" },
-  { round: 5, label: "Semifinaler", short: "Semi" },
-  { round: 6, label: "Match om brons", short: "Brons" },
-  { round: 7, label: "Final", short: "Final" },
+  { round: 4, label: "Sextondelsfinal", short: "32-lag" },
+  { round: 5, label: "Åttondelsfinal", short: "16-lag" },
+  { round: 6, label: "Kvartsfinal", short: "Kvart" },
+  { round: 7, label: "Semifinal", short: "Semi" },
+  { round: 8, label: "Final & Brons", short: "Final" },
 ];
+
+function isPlaceholderTeam(name) {
+  // ESPN/fixturedownload placeholders like "1A", "2B", "3CDFGH", "W57"
+  return !state.teams[name] && !state.teams[FD_TO_ESPN[name]];
+}
+
+function koTeamHtml(name, side) {
+  if (isPlaceholderTeam(name)) {
+    const label = /to be announced/i.test(name) ? "TBD" : name;
+    return `<span class="ko-team"><span class="ko-ph">${label}</span></span>`;
+  }
+  return `<span class="ko-team">${teamLogoHtml(name, "sm")}<span class="ko-tn">${name}</span></span>`;
+}
 
 function renderKnockout() {
   const list = state.fixtures?.matches || [];
-  const sections = KO_ROUNDS.map(({ round, label }) => {
-    const games = list.filter((m) => m.RoundNumber === round);
-    if (!games.length) return "";
-    const cards = games
-      .sort((a, b) => new Date(a.DateUtc) - new Date(b.DateUtc))
-      .map((g) => {
-        const played = g.HomeTeamScore != null && g.AwayTeamScore != null;
-        const score = played ? `${g.HomeTeamScore}–${g.AwayTeamScore}` : "vs";
-        const dateStr = g.DateUtc ? formatDate(g.DateUtc) : "";
-        const homeLogo = teamLogoHtml(g.HomeTeam);
-        const awayLogo = teamLogoHtml(g.AwayTeam);
-        return `<article class="ko-match">
-          <div class="ko-side">${homeLogo}<span>${g.HomeTeam}</span></div>
-          <div class="ko-score ${played ? "" : "pending"}">${score}</div>
-          <div class="ko-side away"><span>${g.AwayTeam}</span>${awayLogo}</div>
-          <div class="ko-meta">${dateStr}${g.Location ? " · " + g.Location : ""}</div>
-        </article>`;
-      })
-      .join("");
-    return `<section class="ko-round">
-      <h3>${label}</h3>
-      <div class="ko-grid">${cards}</div>
-    </section>`;
-  }).join("");
+  state.koRound = state.koRound || 4;
 
-  document.getElementById("view-knockout").querySelector("section").innerHTML = `
-    <h2 class="view-title">Slutspel</h2>
-    <p class="ko-intro">Lagen fylls i automatiskt när gruppspelet är klart. Tipset för slutspelet öppnar 27 juni.</p>
-    ${sections || '<div class="knockout-stub"><p>Slutspelsmatcherna laddas när schemat publiceras.</p></div>'}
+  const chips = KO_ROUNDS.map(
+    (r) => `<button class="ko-chip ${state.koRound === r.round ? "active" : ""}" data-ko-round="${r.round}">${r.short}</button>`,
+  ).join("");
+
+  const meta = KO_ROUNDS.find((r) => r.round === state.koRound);
+  const games = list
+    .filter((m) => m.RoundNumber === state.koRound)
+    .sort((a, b) => new Date(a.DateUtc) - new Date(b.DateUtc));
+
+  const cards = games
+    .map((g) => {
+      const played = g.HomeTeamScore != null && g.AwayTeamScore != null;
+      const hWin = played && g.HomeTeamScore > g.AwayTeamScore;
+      const aWin = played && g.AwayTeamScore > g.HomeTeamScore;
+      const dateStr = g.DateUtc ? formatDate(g.DateUtc) : "Datum TBD";
+      return `<article class="ko-match">
+        <div class="ko-row ${hWin ? "win" : ""}">
+          ${koTeamHtml(g.HomeTeam)}
+          <span class="ko-num">${played ? g.HomeTeamScore : ""}</span>
+        </div>
+        <div class="ko-row ${aWin ? "win" : ""}">
+          ${koTeamHtml(g.AwayTeam)}
+          <span class="ko-num">${played ? g.AwayTeamScore : ""}</span>
+        </div>
+        <div class="ko-foot">${dateStr}${g.Location ? " · " + g.Location : ""}</div>
+      </article>`;
+    })
+    .join("");
+
+  const allPlaceholder = games.length && games.every((g) => isPlaceholderTeam(g.HomeTeam) && isPlaceholderTeam(g.AwayTeam));
+  const banner = allPlaceholder
+    ? `<p class="ko-intro">Lagen lottas automatiskt från grupptabellerna när gruppspelet är klart (27 juni). Koder som <strong>1A</strong> = vinnare grupp A.</p>`
+    : "";
+
+  document.getElementById("knockout").innerHTML = `
+    <div class="ko-chips">${chips}</div>
+    <h3 class="ko-round-title">${meta?.label || ""}</h3>
+    ${banner}
+    <div class="ko-grid">${cards || '<p class="hint">Inga matcher i denna omgång än.</p>'}</div>
   `;
 }
 
@@ -890,7 +933,7 @@ function renderHero() {
   el.innerHTML = `<div class="hero-card" data-open-match="${next.idx}" ${heroFlagBg(next.m.homeEn, next.m.awayEn)}>
     <div class="hero-bg"></div>
     <div class="hero-content">
-      <div class="hero-tag">Nästa match · sparkas igång om ${countdown}</div>
+      <div class="hero-tag">Nästa match · om ${countdown}</div>
       <div class="hero-teams">
         <div class="hero-side">
           ${teamLogoHtml(next.m.homeEn, "lg")}
@@ -910,10 +953,35 @@ function renderHero() {
   </div>`;
 }
 
+function renderPulse() {
+  const el = document.getElementById("pulse");
+  if (!el) return;
+  let played = 0, goals = 0, live = 0;
+  for (const f of state.fixtures.matches) {
+    if (f.HomeTeamScore != null && f.AwayTeamScore != null) {
+      played++;
+      goals += Number(f.HomeTeamScore) + Number(f.AwayTeamScore);
+    }
+  }
+  for (const m of state.picks.groupStage) {
+    if (findLive(m.homeEn, m.awayEn)?.state === "in") live++;
+  }
+  const total = state.fixtures.matches.length;
+  const avg = played ? (goals / played).toFixed(1) : "0";
+  el.innerHTML = `
+    <div class="pulse">
+      <div class="pulse-cell"><span class="pulse-val">${played}<span class="pulse-tot">/${total}</span></span><span class="pulse-lbl">Spelade</span></div>
+      <div class="pulse-cell"><span class="pulse-val">${goals}</span><span class="pulse-lbl">Mål</span></div>
+      <div class="pulse-cell"><span class="pulse-val">${avg}</span><span class="pulse-lbl">Snitt/match</span></div>
+      <div class="pulse-cell"><span class="pulse-val ${live ? "pulse-live" : ""}">${live}</span><span class="pulse-lbl">Live nu</span></div>
+    </div>`;
+}
+
 function render() {
   const scores = computeScores();
   renderScoreboard(scores);
   renderHero();
+  renderPulse();
   renderMatches();
   if (state.tab === "groups") renderGroups();
   if (state.tab === "sweden") renderSweden();
@@ -921,8 +989,11 @@ function render() {
 }
 
 document.addEventListener("click", (e) => {
-  const tab = e.target.closest(".tab");
+  const tab = e.target.closest(".navbtn");
   if (tab) { switchTab(tab.dataset.tab); return; }
+
+  const koChip = e.target.closest("[data-ko-round]");
+  if (koChip) { state.koRound = Number(koChip.dataset.koRound); renderKnockout(); return; }
 
   const filterBtn = e.target.closest(".filter");
   if (filterBtn) {
@@ -934,7 +1005,7 @@ document.addEventListener("click", (e) => {
   }
 
   const playerRow = e.target.closest("[data-player]");
-  if (playerRow && !e.target.closest(".tab")) { openPlayer(playerRow.dataset.player); return; }
+  if (playerRow && !e.target.closest(".navbtn")) { openPlayer(playerRow.dataset.player); return; }
 
   const grpMatch = e.target.closest("[data-open-match]");
   if (grpMatch) { openDetail(Number(grpMatch.dataset.openMatch)); return; }
@@ -1173,7 +1244,7 @@ async function openDetail(idx) {
       </div>
     </header>
     ${detailOurPicksHtml(m, outcome)}
-    <div id="detail-extra"><p class="detail-loading">Hämtar matchdetaljer…</p></div>
+    <div id="detail-extra"><div class="skel skel-line"></div><div class="skel skel-line"></div></div>
   `;
   dlg.showModal();
 
