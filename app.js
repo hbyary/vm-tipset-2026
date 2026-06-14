@@ -642,18 +642,71 @@ function detailEventsHtml(summary) {
   </section>`;
 }
 
-function detailNewsHtml(summary) {
+function detailNewsHtml(summary, m) {
   const articles = summary.news?.articles || [];
   if (!articles.length) return "";
-  const items = articles
-    .slice(0, 4)
+  const want = new Set([m.homeEn, m.awayEn].filter(Boolean).map((s) => s.toLowerCase()));
+  const isRelevant = (a) => {
+    const cats = a.categories || [];
+    return cats.some(
+      (c) => c.type === "team" && c.description && want.has(c.description.toLowerCase()),
+    );
+  };
+  const filtered = articles.filter(isRelevant);
+  if (!filtered.length) return "";
+  const items = filtered
+    .slice(0, 5)
     .map(
-      (a) =>
-        `<li><a href="${a.links?.web?.href || "#"}" target="_blank" rel="noopener">${a.headline}</a><span class="news-desc">${a.description || ""}</span></li>`,
+      (a) => `<li>
+        <a href="${a.links?.web?.href || "#"}" target="_blank" rel="noopener">${a.headline}</a>
+        ${a.description ? `<span class="news-desc">${a.description}</span>` : ""}
+      </li>`,
     );
   return `<section class="detail-section">
     <h3>Nyheter</h3>
     <ul class="news-list">${items.join("")}</ul>
+  </section>`;
+}
+
+function detailArticleHtml(summary) {
+  const a = summary.article;
+  if (!a?.headline) return "";
+  const img = a.images?.[0]?.url || a.images?.[0]?.href || "";
+  const link = a.links?.web?.href || a.links?.mobile?.href || "";
+  return `<section class="detail-section">
+    <h3>Analys</h3>
+    <article class="analysis-card">
+      ${img ? `<img class="analysis-img" src="${img}" alt="" loading="lazy">` : ""}
+      <div class="analysis-body">
+        <h4 class="analysis-headline">${a.headline}</h4>
+        ${a.description ? `<p class="analysis-desc">${a.description}</p>` : ""}
+        ${link ? `<a class="analysis-link" href="${link}" target="_blank" rel="noopener">Läs hela analysen →</a>` : ""}
+      </div>
+    </article>
+  </section>`;
+}
+
+function detailHighlightsHtml(summary) {
+  const videos = (summary.videos || []).filter((v) => v.links?.source?.href);
+  if (!videos.length) return "";
+  const items = videos
+    .slice(0, 6)
+    .map((v) => {
+      const src = v.links.source.href;
+      const poster = v.thumbnail || "";
+      const dur = v.duration ? `${v.duration}s` : "";
+      return `<figure class="hl">
+        <video class="hl-video" controls preload="none" playsinline poster="${poster}" src="${src}"></video>
+        <figcaption class="hl-cap">
+          <span class="hl-title">${v.headline || ""}</span>
+          <span class="hl-dur">${dur}</span>
+        </figcaption>
+      </figure>`;
+    })
+    .join("");
+  return `<section class="detail-section">
+    <h3>Mål och höjdpunkter</h3>
+    <div class="hl-grid">${items}</div>
   </section>`;
 }
 
@@ -729,12 +782,14 @@ async function openDetail(idx) {
     const summary = await getSummary(eid);
     const oddsObj = summary.pickcenter?.[0] || summary.odds?.[0];
     document.getElementById("detail-extra").innerHTML = `
+      ${detailArticleHtml(summary)}
+      ${detailHighlightsHtml(summary)}
       ${detailOddsHtml(oddsObj)}
       ${detailProbabilityHtml(oddsObj, m)}
       ${detailFormHtml(summary)}
       ${detailH2HHtml(summary)}
       ${detailEventsHtml(summary)}
-      ${detailNewsHtml(summary)}
+      ${detailNewsHtml(summary, m)}
       ${detailVenueHtml(summary)}
     `;
   } catch (err) {
