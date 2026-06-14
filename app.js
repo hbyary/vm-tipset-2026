@@ -1,11 +1,14 @@
 const PICKS_URL = "data/picks.json";
 const FIXTURES_URL = "data/fixtures.json";
+const LIVE_URL = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard";
 
 const $ = (sel) => document.querySelector(sel);
 
 const state = {
   picks: null,
   fixtures: null,
+  live: {},
+  liveFetchedAt: null,
   filter: "all",
 };
 
@@ -29,15 +32,76 @@ async function refresh() {
   }
 }
 
+function liveWindowActive() {
+  const list = state.fixtures?.matches;
+  if (!list) return false;
+  const now = Date.now();
+  return list.some((m) => {
+    if (!m.DateUtc) return false;
+    const t = new Date(m.DateUtc).getTime();
+    return now > t - 30 * 60_000 && now < t + 3 * 60 * 60_000;
+  });
+}
+
+async function pollLive() {
+  if (document.hidden) return;
+  if (!liveWindowActive()) return;
+  try {
+    const r = await fetch(LIVE_URL, { cache: "no-store" });
+    const j = await r.json();
+    const map = {};
+    for (const e of j.events || []) {
+      const comp = e.competitions?.[0];
+      if (!comp) continue;
+      const home = comp.competitors?.find((x) => x.homeAway === "home");
+      const away = comp.competitors?.find((x) => x.homeAway === "away");
+      if (!home || !away) continue;
+      const homeName = espnTeamName(home.team.displayName);
+      const awayName = espnTeamName(away.team.displayName);
+      map[liveKey(homeName, awayName)] = {
+        state: e.status?.type?.state,
+        clock: e.status?.displayClock,
+        period: e.status?.period,
+        homeScore: home.score,
+        awayScore: away.score,
+      };
+    }
+    state.live = map;
+    state.liveFetchedAt = Date.now();
+    render();
+  } catch (err) {
+    console.warn("live poll failed", err);
+  }
+}
+
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) refresh();
+  if (!document.hidden) {
+    refresh();
+    pollLive();
+  }
 });
 setInterval(refresh, 60_000);
+setInterval(pollLive, 30_000);
 
 function findFixture(homeEn, awayEn) {
   return state.fixtures.matches.find(
     (m) => m.HomeTeam === homeEn && m.AwayTeam === awayEn,
   );
+}
+
+const ESPN_ALIAS = {
+  "South Korea": "Korea Republic",
+  "Iran": "IR Iran",
+};
+function espnTeamName(displayName) {
+  return ESPN_ALIAS[displayName] || displayName;
+}
+
+function liveKey(homeEn, awayEn) {
+  return `${homeEn}|${awayEn}`;
+}
+function findLive(homeEn, awayEn) {
+  return state.live[liveKey(homeEn, awayEn)];
 }
 
 function outcomeFromScores(h, a) {
@@ -47,14 +111,27 @@ function outcomeFromScores(h, a) {
   return "X";
 }
 
+function resolvedScores(m) {
+  const f = findFixture(m.homeEn, m.awayEn);
+  let h = f?.HomeTeamScore;
+  let a = f?.AwayTeamScore;
+  if (h == null || a == null) {
+    const live = findLive(m.homeEn, m.awayEn);
+    if (live && live.state === "post") {
+      h = Number(live.homeScore);
+      a = Number(live.awayScore);
+    }
+  }
+  return { home: h, away: a, fixture: f };
+}
+
 function computeScores() {
-  const { picks, fixtures } = state;
+  const { picks } = state;
   const scores = Object.fromEntries(picks.players.map((p) => [p, { pts: 0, bonus: 0 }]));
 
   for (const m of picks.groupStage) {
-    const f = findFixture(m.homeEn, m.awayEn);
-    if (!f) continue;
-    const outcome = outcomeFromScores(f.HomeTeamScore, f.AwayTeamScore);
+    const { home, away } = resolvedScores(m);
+    const outcome = outcomeFromScores(home, away);
     if (outcome == null) continue;
     for (const p of picks.players) {
       if (m.picks[p] === outcome) scores[p].pts += picks.scoring.groupMatch;
@@ -120,17 +197,20 @@ function formatDate(iso) {
 function renderMatches() {
   const { picks } = state;
   const rows = picks.groupStage.map((m) => {
-    const f = findFixture(m.homeEn, m.awayEn);
-    const homeScore = f?.HomeTeamScore ?? null;
-    const awayScore = f?.AwayTeamScore ?? null;
-    const outcome = outcomeFromScores(homeScore, awayScore);
+    const { home, away, fixture: f } = resolvedScores(m);
+    const live = findLive(m.homeEn, m.awayEn);
+    const isLive = live?.state === "in";
+    const liveHome = isLive ? Number(live.homeScore) : null;
+    const liveAway = isLive ? Number(live.awayScore) : null;
+    const outcome = outcomeFromScores(home, away);
     const played = outcome != null;
-    return { m, f, homeScore, awayScore, outcome, played };
+    return { m, f, live, isLive, liveHome, liveAway, homeScore: home, awayScore: away, outcome, played };
   });
 
   const filtered = rows.filter((r) => {
     if (state.filter === "played") return r.played;
-    if (state.filter === "upcoming") return !r.played;
+    if (state.filter === "upcoming") return !r.played && !r.isLive;
+    if (state.filter === "live") return r.isLive;
     return true;
   });
 
@@ -141,12 +221,23 @@ function renderMatches() {
   });
 
   const html = filtered
-    .map(({ m, f, homeScore, awayScore, outcome, played }) => {
-      const score = played
-        ? `<span class="match-result">${homeScore}–${awayScore}</span>`
-        : `<span class="match-result pending">vs</span>`;
-      const dateStr = f?.DateUtc ? formatDate(f.DateUtc) : "";
-      const outcomeBadge = played ? `<span class="outcome-badge">${outcome}</span>` : "";
+    .map(({ m, f, live, isLive, liveHome, liveAway, homeScore, awayScore, outcome, played }) => {
+      let score, dateOrClock, articleClass = "";
+      if (isLive) {
+        articleClass = "match live";
+        score = `<span class="match-result live">${liveHome}–${liveAway}</span>`;
+        const clock = live.clock || `${live.period}'`;
+        dateOrClock = `<span class="live-badge"><span class="live-dot"></span>LIVE · ${clock}</span>`;
+      } else if (played) {
+        articleClass = "match";
+        score = `<span class="match-result">${homeScore}–${awayScore}</span>`;
+        dateOrClock = `<span class="match-date">${f?.DateUtc ? formatDate(f.DateUtc) : ""}</span>`;
+      } else {
+        articleClass = "match";
+        score = `<span class="match-result pending">vs</span>`;
+        dateOrClock = `<span class="match-date">${f?.DateUtc ? formatDate(f.DateUtc) : ""}</span>`;
+      }
+      const outcomeBadge = played && !isLive ? `<span class="outcome-badge">${outcome}</span>` : "";
       const picksHtml = picks.players
         .map((p) => {
           const pick = m.picks[p] || "";
@@ -163,12 +254,12 @@ function renderMatches() {
           </div>`;
         })
         .join("");
-      return `<article class="match">
+      return `<article class="${articleClass}">
         <div class="match-head">
           <div class="match-teams">
             ${m.homeSv} – ${m.awaySv} ${score} ${outcomeBadge}
           </div>
-          <div class="match-date">${dateStr}</div>
+          ${dateOrClock}
         </div>
         <div class="picks">${picksHtml}</div>
       </article>`;
@@ -211,7 +302,9 @@ if ("serviceWorker" in navigator) {
   );
 }
 
-load().catch((err) => {
-  console.error(err);
-  $("#scoreboard").innerHTML = `<li><span>Kunde inte ladda data: ${err.message}</span></li>`;
-});
+load()
+  .then(() => pollLive())
+  .catch((err) => {
+    console.error(err);
+    $("#scoreboard").innerHTML = `<li><span>Kunde inte ladda data: ${err.message}</span></li>`;
+  });
