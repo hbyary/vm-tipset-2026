@@ -142,8 +142,15 @@ document.addEventListener("visibilitychange", () => {
     pollLive();
   }
 });
-// Static data refresh every 60s — keeps "Synkad" indicator current
-setInterval(refresh, 60_000);
+// Static data refresh aligned to each whole minute (:00)
+function startMinuteRefresh() {
+  const msToNextMinute = 60_000 - (Date.now() % 60_000);
+  setTimeout(() => {
+    refresh();
+    setInterval(refresh, 60_000);
+  }, msToNextMinute);
+}
+startMinuteRefresh();
 // Live poll: every 10s during live windows, otherwise every 2 min to detect kickoffs early
 let livePollTimer = null;
 function tuneLivePoll() {
@@ -162,7 +169,7 @@ function findFixture(homeEn, awayEn) {
   );
 }
 
-function isMagnusMatch(m) {
+function isRamenMatch(m) {
   const a = new Set([m.homeEn, m.awayEn]);
   return a.has("Sweden") && a.has("Japan");
 }
@@ -372,7 +379,7 @@ function matchCardHtml(row) {
       return `<div class="pick ${cls}"><span class="who">${p}</span><span class="what">${pick || "–"}</span></div>`;
     })
     .join("");
-  const magnusBadge = isMagnusMatch(m) ? `<div class="magnus-badge">🎟️ Magnus on tour</div>` : "";
+  const magnusBadge = isRamenMatch(m) ? `<div class="magnus-badge">🎟️ Ramen on tour</div>` : "";
   return `<article class="${articleClass}" data-idx="${idx}">
     <div class="mc-fixture">
       <div class="mc-team home">
@@ -601,6 +608,7 @@ function openPlayer(name) {
       <ul class="player-rows">${items}</ul>
     </section>
   `;
+  document.documentElement.classList.add("modal-open");
   document.getElementById("player").showModal();
 }
 
@@ -691,7 +699,7 @@ function renderSweden() {
       if (isLive) scoreLine = `<span class="se-score live">${live.homeScore}–${live.awayScore} · ${live.clock}</span>`;
       else if (home != null) scoreLine = `<span class="se-score">${home}–${away}</span>`;
       else scoreLine = `<span class="se-score pending">${f?.DateUtc ? formatDate(f.DateUtc) : ""}</span>`;
-      const magnusBadge = isMagnusMatch(m) ? `<span class="magnus-badge">🎟️ Magnus on tour</span>` : "";
+      const magnusBadge = isRamenMatch(m) ? `<span class="magnus-badge">🎟️ Ramen on tour</span>` : "";
       return `<article class="match" data-idx="${idx}">
         <div class="match-head">
           <div class="match-teams">
@@ -754,6 +762,20 @@ function renderSweden() {
   `;
 }
 
+function extractGoals(summary) {
+  const out = [];
+  for (const e of summary.keyEvents || []) {
+    const t = (e.type?.text || "").toLowerCase();
+    if (!t.includes("goal")) continue;
+    if (t.includes("own")) continue; // own goals not credited
+    const scorer = e.participants?.[0]?.athlete?.displayName;
+    if (!scorer) continue;
+    const isPen = /penalty/i.test(e.text || "") || t.includes("penalty");
+    out.push({ scorer, team: e.team?.displayName || "", penalty: isPen });
+  }
+  return out;
+}
+
 async function renderHighlights() {
   const container = document.getElementById("highlights");
   const playedGames = state.picks.groupStage
@@ -761,54 +783,87 @@ async function renderHighlights() {
     .filter(({ f }) => f?.HomeTeamScore != null && f?.AwayTeamScore != null)
     .sort((a, b) => new Date(b.f.DateUtc) - new Date(a.f.DateUtc));
   if (!playedGames.length) {
-    container.innerHTML = `<p class="hint">Inga spelade matcher än.</p>`;
+    container.innerHTML = `<p class="empty-state">Inga spelade matcher än. Skytteligan och klippen fylls på när matcherna spelats.</p>`;
     return;
   }
 
   container.innerHTML = `<div class="skel skel-card"></div><div class="skel skel-card"></div>`;
   const groups = [];
+  const scorers = new Map(); // name -> { name, team, goals, pens }
   for (const { m, idx, f } of playedGames) {
     try {
       const eid = await getEventId(m.homeEn, m.awayEn, f.DateUtc);
       if (!eid) continue;
       const summary = await getSummary(eid);
+      for (const g of extractGoals(summary)) {
+        const key = g.scorer + "|" + g.team;
+        const rec = scorers.get(key) || { name: g.scorer, team: g.team, goals: 0, pens: 0 };
+        rec.goals++;
+        if (g.penalty) rec.pens++;
+        scorers.set(key, rec);
+      }
       const videos = (summary.videos || []).filter((v) => v.links?.source?.href);
-      if (!videos.length) continue;
-      groups.push({ m, idx, f, videos });
+      if (videos.length) groups.push({ m, idx, f, videos });
     } catch (e) {
-      console.warn("highlight fetch failed for match", idx, e);
+      console.warn("highlight/goal fetch failed for match", idx, e);
     }
   }
-  if (!groups.length) {
-    container.innerHTML = `<p class="hint">Inga videoklipp tillgängliga än.</p>`;
-    return;
+
+  const topScorers = [...scorers.values()].sort(
+    (a, b) => b.goals - a.goals || b.pens - a.pens || a.name.localeCompare(b.name, "sv"),
+  );
+
+  let skyttHtml = "";
+  if (topScorers.length) {
+    let rank = 0, prev = null, dr = 0;
+    const rows = topScorers.slice(0, 15).map((s) => {
+      rank++;
+      if (s.goals !== prev) dr = rank;
+      prev = s.goals;
+      const pen = s.pens ? `<span class="sk-pen">${s.pens} straff</span>` : "";
+      return `<li class="sk-row">
+        <span class="sk-rank ${dr === 1 ? "lead" : ""}">${dr}</span>
+        <span class="sk-flag">${teamLogoHtml(s.team, "sm")}</span>
+        <span class="sk-name">${s.name}${pen}</span>
+        <span class="sk-goals">${s.goals}</span>
+      </li>`;
+    }).join("");
+    skyttHtml = `<section class="block-inner sk-wrap">
+      <div class="section-head"><h2>Skytteliga</h2><span class="section-sub">${topScorers.length} målskyttar</span></div>
+      <ol class="sk-list">${rows}</ol>
+    </section>`;
   }
-  container.innerHTML = groups
-    .map(({ m, idx, f, videos }) => {
-      const score = `${f.HomeTeamScore}–${f.AwayTeamScore}`;
-      const items = videos
-        .map((v) => {
-          const src = v.links.source.href;
-          const poster = v.thumbnail || "";
-          const dur = v.duration ? `${v.duration}s` : "";
-          return `<figure class="hl">
-            <video class="hl-video" controls preload="none" playsinline poster="${poster}" src="${src}"></video>
-            <figcaption class="hl-cap">
-              <span class="hl-title">${v.headline || ""}</span>
-              <span class="hl-dur">${dur}</span>
-            </figcaption>
-          </figure>`;
+
+  const hlHtml = groups.length
+    ? groups
+        .map(({ m, idx, f, videos }) => {
+          const score = `${f.HomeTeamScore}–${f.AwayTeamScore}`;
+          const items = videos
+            .map((v) => {
+              const src = v.links.source.href;
+              const poster = v.thumbnail || "";
+              const dur = v.duration ? `${v.duration}s` : "";
+              return `<figure class="hl">
+                <video class="hl-video" controls preload="none" playsinline poster="${poster}" src="${src}"></video>
+                <figcaption class="hl-cap">
+                  <span class="hl-title">${v.headline || ""}</span>
+                  <span class="hl-dur">${dur}</span>
+                </figcaption>
+              </figure>`;
+            })
+            .join("");
+          return `<section class="hl-match" data-open-match="${idx}">
+            <div class="hl-match-head">
+              <span class="hl-match-teams">${teamLogoHtml(m.homeEn, "sm")} ${m.homeSv} ${score} ${m.awaySv} ${teamLogoHtml(m.awayEn, "sm")}</span>
+              <span class="hl-match-date">${formatDate(f.DateUtc)}</span>
+            </div>
+            <div class="hl-grid">${items}</div>
+          </section>`;
         })
-        .join("");
-      return `<section class="hl-match" data-open-match="${idx}">
-        <div class="hl-match-head">
-          <span class="hl-match-teams">${teamLogoHtml(m.homeEn, "sm")} ${m.homeSv} ${score} ${m.awaySv} ${teamLogoHtml(m.awayEn, "sm")}</span>
-          <span class="hl-match-date">${formatDate(f.DateUtc)}</span>
-        </div>
-        <div class="hl-grid">${items}</div>
-      </section>`;
-    })
-    .join("");
+        .join("")
+    : `<p class="empty-state">Inga videoklipp tillgängliga än.</p>`;
+
+  container.innerHTML = `${skyttHtml}<div class="section-head hl-sep"><h2>Höjdpunkter</h2></div>${hlHtml}`;
 }
 
 const KO_ROUNDS = [
@@ -1021,11 +1076,12 @@ document.addEventListener("click", (e) => {
 });
 
 function bindBackdropClose(id) {
-  document.getElementById(id).addEventListener("click", (e) => {
-    const dlg = e.currentTarget;
+  const dlg = document.getElementById(id);
+  dlg.addEventListener("click", (e) => {
     const r = dlg.getBoundingClientRect();
     if (e.clientY < r.top || e.clientY > r.bottom || e.clientX < r.left || e.clientX > r.right) dlg.close();
   });
+  dlg.addEventListener("close", () => document.documentElement.classList.remove("modal-open"));
 }
 bindBackdropClose("detail");
 bindBackdropClose("player");
@@ -1246,6 +1302,7 @@ async function openDetail(idx) {
     ${detailOurPicksHtml(m, outcome)}
     <div id="detail-extra"><div class="skel skel-line"></div><div class="skel skel-line"></div></div>
   `;
+  document.documentElement.classList.add("modal-open");
   dlg.showModal();
 
   try {
