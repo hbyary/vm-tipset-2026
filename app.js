@@ -41,6 +41,12 @@ const FD_TO_ESPN = {
   "Korea Republic": "South Korea",
   "USA": "United States",
 };
+function toEspnName(fdName) {
+  return FD_TO_ESPN[fdName] || fdName;
+}
+function normTeam(s) {
+  return (s || "").toLowerCase().replace(/[''`]/g, "'").replace(/\s+/g, " ").trim();
+}
 function teamLogo(name) {
   if (!name) return null;
   const t = state.teams[name] || state.teams[FD_TO_ESPN[name]];
@@ -84,6 +90,7 @@ async function load() {
   state.teams = teams;
   state.lastChecked = Date.now();
   render();
+  backfillResults();
 }
 
 async function refresh() {
@@ -92,6 +99,63 @@ async function refresh() {
   } catch (e) {
     console.warn("refresh failed", e);
   }
+}
+
+// fixturedownload sometimes lags on results — backfill final scores from ESPN (more reliable)
+const _scoreboardCache = new Map(); // ymd -> { at, map }
+async function espnResultsForDate(ymd) {
+  const cached = _scoreboardCache.get(ymd);
+  if (cached && Date.now() - cached.at < 45_000) return cached.map;
+  const map = {};
+  try {
+    const r = await fetch(`${ESPN_SCOREBOARD}?dates=${ymd}`, { cache: "no-store" });
+    const j = await r.json();
+    for (const e of j.events || []) {
+      if (e.status?.type?.state !== "post") continue;
+      const c = e.competitions?.[0];
+      const h = c?.competitors?.find((x) => x.homeAway === "home");
+      const a = c?.competitors?.find((x) => x.homeAway === "away");
+      if (!h || !a) continue;
+      map[normTeam(h.team.displayName) + "|" + normTeam(a.team.displayName)] = {
+        hs: Number(h.score),
+        as: Number(a.score),
+      };
+    }
+  } catch (e) {
+    console.warn("espn results fetch failed", ymd, e);
+  }
+  _scoreboardCache.set(ymd, { at: Date.now(), map });
+  return map;
+}
+
+async function backfillResults() {
+  const list = state.fixtures?.matches || [];
+  const now = Date.now();
+  const stale = list.filter(
+    (f) =>
+      f.DateUtc &&
+      new Date(f.DateUtc).getTime() < now - 2 * 3600_000 && // kicked off >2h ago
+      (f.HomeTeamScore == null || f.AwayTeamScore == null),
+  );
+  if (!stale.length) return;
+  const dates = [...new Set(stale.map((f) => f.DateUtc.slice(0, 10).replace(/-/g, "")))];
+  let patched = 0;
+  for (const ymd of dates) {
+    const results = await espnResultsForDate(ymd);
+    for (const f of list) {
+      if (f.HomeTeamScore != null && f.AwayTeamScore != null) continue;
+      if (!f.DateUtc || f.DateUtc.slice(0, 10).replace(/-/g, "") !== ymd) continue;
+      const key = normTeam(toEspnName(f.HomeTeam)) + "|" + normTeam(toEspnName(f.AwayTeam));
+      const res = results[key];
+      if (res && Number.isFinite(res.hs) && Number.isFinite(res.as)) {
+        f.HomeTeamScore = res.hs;
+        f.AwayTeamScore = res.as;
+        f._backfilled = true;
+        patched++;
+      }
+    }
+  }
+  if (patched) render();
 }
 
 function liveWindowActive() {
