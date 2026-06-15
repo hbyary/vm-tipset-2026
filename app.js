@@ -247,10 +247,9 @@ function isRamenMatch(m) {
   return a.has("Sweden") && a.has("Japan");
 }
 
-const ESPN_ALIAS = {
-  "South Korea": "Korea Republic",
-  "Iran": "IR Iran",
-};
+const ESPN_ALIAS = Object.fromEntries(
+  Object.entries(FD_TO_ESPN).map(([fd, espn]) => [espn, fd]),
+);
 function espnTeamName(displayName) {
   return ESPN_ALIAS[displayName] || displayName;
 }
