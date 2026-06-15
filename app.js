@@ -134,25 +134,34 @@ async function backfillResults() {
   const stale = list.filter(
     (f) =>
       f.DateUtc &&
-      new Date(f.DateUtc).getTime() < now - 2 * 3600_000 && // kicked off >2h ago
+      new Date(f.DateUtc).getTime() < now && // already kicked off
       (f.HomeTeamScore == null || f.AwayTeamScore == null),
   );
   if (!stale.length) return;
-  const dates = [...new Set(stale.map((f) => f.DateUtc.slice(0, 10).replace(/-/g, "")))];
+  // ESPN buckets matches by US-timezone date, so a match at e.g. 02:00 UTC lands
+  // on the previous ESPN day. Query ±1 day around each stale date and match by
+  // team pair (each pairing is unique), independent of which day-bucket it's in.
+  const dates = new Set();
+  for (const f of stale) {
+    const base = new Date(f.DateUtc.slice(0, 10) + "T12:00:00Z");
+    for (const off of [-1, 0, 1]) {
+      const d = new Date(base);
+      d.setUTCDate(d.getUTCDate() + off);
+      dates.add(d.toISOString().slice(0, 10).replace(/-/g, ""));
+    }
+  }
+  const merged = {};
+  for (const ymd of dates) Object.assign(merged, await espnResultsForDate(ymd));
+
   let patched = 0;
-  for (const ymd of dates) {
-    const results = await espnResultsForDate(ymd);
-    for (const f of list) {
-      if (f.HomeTeamScore != null && f.AwayTeamScore != null) continue;
-      if (!f.DateUtc || f.DateUtc.slice(0, 10).replace(/-/g, "") !== ymd) continue;
-      const key = normTeam(toEspnName(f.HomeTeam)) + "|" + normTeam(toEspnName(f.AwayTeam));
-      const res = results[key];
-      if (res && Number.isFinite(res.hs) && Number.isFinite(res.as)) {
-        f.HomeTeamScore = res.hs;
-        f.AwayTeamScore = res.as;
-        f._backfilled = true;
-        patched++;
-      }
+  for (const f of stale) {
+    const key = normTeam(toEspnName(f.HomeTeam)) + "|" + normTeam(toEspnName(f.AwayTeam));
+    const res = merged[key];
+    if (res && Number.isFinite(res.hs) && Number.isFinite(res.as)) {
+      f.HomeTeamScore = res.hs;
+      f.AwayTeamScore = res.as;
+      f._backfilled = true;
+      patched++;
     }
   }
   if (patched) render();
@@ -1666,9 +1675,24 @@ function detailH2HHtml(summary) {
 }
 
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () =>
-    navigator.serviceWorker.register("sw.js").catch(() => {}),
-  );
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloadedForUpdate = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController || reloadedForUpdate) return; // skip reload on first install
+    reloadedForUpdate = true;
+    location.reload();
+  });
+  window.addEventListener("load", async () => {
+    try {
+      const reg = await navigator.serviceWorker.register("sw.js");
+      // Check for a newer service worker now and whenever the tab refocuses.
+      reg.update();
+      setInterval(() => reg.update(), 5 * 60_000);
+      window.addEventListener("focus", () => reg.update());
+    } catch (e) {
+      /* ignore */
+    }
+  });
 }
 
 load()
