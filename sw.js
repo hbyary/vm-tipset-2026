@@ -1,5 +1,5 @@
-const CACHE = "vm-tipset-2026-v12";
-const STATIC = [
+const CACHE = "vm-tipset-2026-v17";
+const ASSETS = [
   "./",
   "index.html",
   "styles.css",
@@ -11,39 +11,64 @@ const STATIC = [
 ];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(STATIC)));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).catch(() => {}));
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (e) => {
   e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))),
-    ),
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim()),
   );
-  self.clients.claim();
+});
+
+// Allow the page to force an immediate update.
+self.addEventListener("message", (e) => {
+  if (e.data === "skipWaiting") self.skipWaiting();
 });
 
 self.addEventListener("fetch", (e) => {
-  const url = new URL(e.request.url);
-  if (e.request.method !== "GET") return;
+  const req = e.request;
+  if (req.method !== "GET") return;
+  const url = new URL(req.url);
 
-  // Always go to network for data; fall back to cache when offline.
-  if (url.pathname.endsWith("/data/picks.json") || url.pathname.endsWith("/data/fixtures.json")) {
+  // Never intercept cross-origin (ESPN, etc.) — let the browser handle it.
+  if (url.origin !== self.location.origin) return;
+
+  const isImage = /\.(png|jpe?g|svg|webp|ico|gif)$/i.test(url.pathname);
+
+  if (isImage) {
+    // Cache-first for immutable images/icons.
     e.respondWith(
-      fetch(e.request)
-        .then((resp) => {
-          const copy = resp.clone();
-          caches.open(CACHE).then((c) => c.put(e.request, copy));
-          return resp;
-        })
-        .catch(() => caches.match(e.request)),
+      caches.match(req).then(
+        (hit) =>
+          hit ||
+          fetch(req).then((resp) => {
+            const copy = resp.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy));
+            return resp;
+          }),
+      ),
     );
     return;
   }
 
-  // Cache-first for everything else.
+  // Network-first for the app shell (HTML/JS/CSS) AND data (JSON).
+  // Guarantees the latest code and latest results whenever online; cache is
+  // only a fallback for offline use.
   e.respondWith(
-    caches.match(e.request).then((hit) => hit || fetch(e.request)),
+    fetch(req)
+      .then((resp) => {
+        const copy = resp.clone();
+        caches.open(CACHE).then((c) => c.put(req, copy));
+        return resp;
+      })
+      .catch(() =>
+        caches
+          .match(req)
+          .then((hit) => hit || caches.match("index.html") || caches.match("./")),
+      ),
   );
 });

@@ -41,6 +41,12 @@ const FD_TO_ESPN = {
   "Korea Republic": "South Korea",
   "USA": "United States",
 };
+function toEspnName(fdName) {
+  return FD_TO_ESPN[fdName] || fdName;
+}
+function normTeam(s) {
+  return (s || "").toLowerCase().replace(/[''`]/g, "'").replace(/\s+/g, " ").trim();
+}
 function teamLogo(name) {
   if (!name) return null;
   const t = state.teams[name] || state.teams[FD_TO_ESPN[name]];
@@ -84,6 +90,7 @@ async function load() {
   state.teams = teams;
   state.lastChecked = Date.now();
   render();
+  backfillResults();
 }
 
 async function refresh() {
@@ -92,6 +99,72 @@ async function refresh() {
   } catch (e) {
     console.warn("refresh failed", e);
   }
+}
+
+// fixturedownload sometimes lags on results — backfill final scores from ESPN (more reliable)
+const _scoreboardCache = new Map(); // ymd -> { at, map }
+async function espnResultsForDate(ymd) {
+  const cached = _scoreboardCache.get(ymd);
+  if (cached && Date.now() - cached.at < 45_000) return cached.map;
+  const map = {};
+  try {
+    const r = await fetch(`${ESPN_SCOREBOARD}?dates=${ymd}`, { cache: "no-store" });
+    const j = await r.json();
+    for (const e of j.events || []) {
+      if (e.status?.type?.state !== "post") continue;
+      const c = e.competitions?.[0];
+      const h = c?.competitors?.find((x) => x.homeAway === "home");
+      const a = c?.competitors?.find((x) => x.homeAway === "away");
+      if (!h || !a) continue;
+      map[normTeam(h.team.displayName) + "|" + normTeam(a.team.displayName)] = {
+        hs: Number(h.score),
+        as: Number(a.score),
+      };
+    }
+  } catch (e) {
+    console.warn("espn results fetch failed", ymd, e);
+  }
+  _scoreboardCache.set(ymd, { at: Date.now(), map });
+  return map;
+}
+
+async function backfillResults() {
+  const list = state.fixtures?.matches || [];
+  const now = Date.now();
+  const stale = list.filter(
+    (f) =>
+      f.DateUtc &&
+      new Date(f.DateUtc).getTime() < now && // already kicked off
+      (f.HomeTeamScore == null || f.AwayTeamScore == null),
+  );
+  if (!stale.length) return;
+  // ESPN buckets matches by US-timezone date, so a match at e.g. 02:00 UTC lands
+  // on the previous ESPN day. Query ±1 day around each stale date and match by
+  // team pair (each pairing is unique), independent of which day-bucket it's in.
+  const dates = new Set();
+  for (const f of stale) {
+    const base = new Date(f.DateUtc.slice(0, 10) + "T12:00:00Z");
+    for (const off of [-1, 0, 1]) {
+      const d = new Date(base);
+      d.setUTCDate(d.getUTCDate() + off);
+      dates.add(d.toISOString().slice(0, 10).replace(/-/g, ""));
+    }
+  }
+  const merged = {};
+  for (const ymd of dates) Object.assign(merged, await espnResultsForDate(ymd));
+
+  let patched = 0;
+  for (const f of stale) {
+    const key = normTeam(toEspnName(f.HomeTeam)) + "|" + normTeam(toEspnName(f.AwayTeam));
+    const res = merged[key];
+    if (res && Number.isFinite(res.hs) && Number.isFinite(res.as)) {
+      f.HomeTeamScore = res.hs;
+      f.AwayTeamScore = res.as;
+      f._backfilled = true;
+      patched++;
+    }
+  }
+  if (patched) render();
 }
 
 function liveWindowActive() {
@@ -142,8 +215,15 @@ document.addEventListener("visibilitychange", () => {
     pollLive();
   }
 });
-// Static data refresh every 60s — keeps "Synkad" indicator current
-setInterval(refresh, 60_000);
+// Static data refresh aligned to each whole minute (:00)
+function startMinuteRefresh() {
+  const msToNextMinute = 60_000 - (Date.now() % 60_000);
+  setTimeout(() => {
+    refresh();
+    setInterval(refresh, 60_000);
+  }, msToNextMinute);
+}
+startMinuteRefresh();
 // Live poll: every 10s during live windows, otherwise every 2 min to detect kickoffs early
 let livePollTimer = null;
 function tuneLivePoll() {
@@ -162,7 +242,7 @@ function findFixture(homeEn, awayEn) {
   );
 }
 
-function isMagnusMatch(m) {
+function isRamenMatch(m) {
   const a = new Set([m.homeEn, m.awayEn]);
   return a.has("Sweden") && a.has("Japan");
 }
@@ -372,7 +452,7 @@ function matchCardHtml(row) {
       return `<div class="pick ${cls}"><span class="who">${p}</span><span class="what">${pick || "–"}</span></div>`;
     })
     .join("");
-  const magnusBadge = isMagnusMatch(m) ? `<div class="magnus-badge">🎟️ Magnus on tour</div>` : "";
+  const magnusBadge = isRamenMatch(m) ? `<div class="magnus-badge">🎟️ Ramen on tour</div>` : "";
   return `<article class="${articleClass}" data-idx="${idx}">
     <div class="mc-fixture">
       <div class="mc-team home">
@@ -504,59 +584,176 @@ function playerStats(player) {
   return { pts: pts + (winnerHit ? 2 : 0), hits, misses, blanks, winnerPick, winnerHit, rows };
 }
 
-function playerPatterns(name) {
-  const rows = state.picks.groupStage.map((m) => ({ m, pick: m.picks[name] || "" }));
-  const picked = rows.filter((r) => r.pick);
-  const total = picked.length || 1;
+function mode(arr) {
+  const c = {};
+  let best = null, bestN = 0;
+  for (const v of arr) { c[v] = (c[v] || 0) + 1; if (c[v] > bestN) { bestN = c[v]; best = v; } }
+  return best;
+}
+
+function playerInsights(name) {
+  const players = state.picks.players;
+  const others = players.filter((p) => p !== name);
   const counts = { "1": 0, X: 0, "2": 0 };
-  for (const r of picked) counts[r.pick] = (counts[r.pick] || 0) + 1;
-  const pct = (n) => Math.round((100 * n) / total);
+  const bucket = { "1": { n: 0, c: 0 }, X: { n: 0, c: 0 }, "2": { n: 0, c: 0 } };
+  let totalPicks = 0, played = 0, correct = 0;
+  let loneWins = 0, loneLosses = 0, blindSpots = 0, unique = 0, gimme = 0;
+  const agree = {}; others.forEach((o) => (agree[o] = { same: 0, both: 0 }));
 
-  let homeStrong = 0, awayStrong = 0;
-  for (const r of picked) {
-    if (r.pick === "1") homeStrong++;
-    else if (r.pick === "2") awayStrong++;
+  // chronological for streaks
+  const chrono = state.picks.groupStage
+    .map((m) => ({ m, f: findFixture(m.homeEn, m.awayEn) }))
+    .filter((x) => x.f?.DateUtc)
+    .sort((a, b) => new Date(a.f.DateUtc) - new Date(b.f.DateUtc));
+
+  const seq = [];
+  for (const { m } of chrono) {
+    const pick = m.picks[name];
+    if (pick) { totalPicks++; counts[pick] = (counts[pick] || 0) + 1; }
+
+    // agreement
+    for (const o of others) {
+      if (pick && m.picks[o]) { agree[o].both++; if (m.picks[o] === pick) agree[o].same++; }
+    }
+    // uniqueness
+    if (pick && !others.some((o) => m.picks[o] === pick)) unique++;
+
+    const { home, away } = resolvedScores(m);
+    const outcome = outcomeFromScores(home, away);
+    if (outcome == null || !pick) continue;
+
+    played++;
+    bucket[pick].n++;
+    const isCorrect = pick === outcome;
+    if (isCorrect) { correct++; bucket[pick].c++; }
+    seq.push(isCorrect);
+
+    // field context for this match
+    const pickers = players.filter((p) => m.picks[p]);
+    const sameAsMe = pickers.filter((p) => m.picks[p] === pick).length;
+    const othersPicks = others.map((o) => m.picks[o]).filter(Boolean);
+    const fieldMajority = mode(othersPicks);
+    const fieldGotIt = fieldMajority === outcome;
+
+    if (isCorrect && sameAsMe <= Math.ceil(pickers.length * 0.4)) loneWins++;
+    if (isCorrect && fieldGotIt && sameAsMe >= pickers.length) gimme++;
+    if (!isCorrect && fieldGotIt) blindSpots++;
+    if (!isCorrect && pick !== fieldMajority && !fieldGotIt) loneLosses++;
   }
-  let agree = 0, disagree = 0;
-  for (const r of picked) {
-    const others = state.picks.players.filter((p) => p !== name).map((p) => r.m.picks[p]).filter(Boolean);
-    if (!others.length) continue;
-    const majority = ["1", "X", "2"].sort((a, b) => others.filter((o) => o === b).length - others.filter((o) => o === a).length)[0];
-    if (r.pick === majority) agree++;
-    else disagree++;
+
+  // streaks
+  let bestStreak = 0, run = 0;
+  for (const ok of seq) { run = ok ? run + 1 : 0; bestStreak = Math.max(bestStreak, run); }
+  let curStreak = 0;
+  for (let i = seq.length - 1; i >= 0; i--) { if (seq[i]) curStreak++; else break; }
+
+  // twin & rival
+  let twin = null, rival = null;
+  for (const o of others) {
+    const a = agree[o];
+    if (a.both < 8) continue;
+    const sim = a.same / a.both;
+    if (!twin || sim > twin.sim) twin = { name: o, sim, both: a.both };
+    if (!rival || sim < rival.sim) rival = { name: o, sim, both: a.both };
   }
 
-  const profile = [];
-  if (counts["1"] / total > 0.55) profile.push("hemmastark");
-  else if (counts["2"] / total > 0.35) profile.push("bortavänlig");
-  if (counts["X"] / total > 0.20) profile.push("kryss-orienterad");
-  if (disagree > agree) profile.push("kontrarisk");
-  else profile.push("följer marknadens linje");
+  // standing context
+  const allScores = players.map((p) => ({ name: p, pts: playerStats(p).pts }));
+  allScores.sort((a, b) => b.pts - a.pts);
+  const myPts = allScores.find((s) => s.name === name).pts;
+  const myRank = allScores.findIndex((s) => s.name === name) + 1;
+  const leaderPts = allScores[0].pts;
+  const avgPts = allScores.reduce((s, x) => s + x.pts, 0) / allScores.length;
+  const remaining = chrono.filter(({ m }) => {
+    const { home, away } = resolvedScores(m);
+    return outcomeFromScores(home, away) == null && m.picks[name];
+  }).length;
 
-  const winner = state.picks.winnerPicks[name] || "ingen";
-  const stats = playerStats(name);
-  const playedRows = stats.rows.filter((r) => r.outcome != null);
-  const hitRate = playedRows.length ? Math.round((100 * stats.hits) / playedRows.length) : null;
+  const hitRate = played ? Math.round((100 * correct) / played) : null;
+  const bRate = (k) => (bucket[k].n ? Math.round((100 * bucket[k].c) / bucket[k].n) : null);
+  const pct = (n) => (totalPicks ? Math.round((100 * n) / totalPicks) : 0);
 
-  let verdict = "";
-  if (!picked.length) verdict = `${name} har inte lämnat några tips.`;
-  else {
-    const parts = [
-      `${name} tippar 1 i ${pct(counts["1"])}% av matcherna, X i ${pct(counts.X)}%, och 2 i ${pct(counts["2"])}% — vilket ger en ${profile.slice(0, 2).join(", ") || "balanserad"} profil.`,
-      `Avviker från majoriteten i ${disagree} av ${total} matcher.`,
-      hitRate != null
-        ? `Träffsäkerhet hittills: ${hitRate}% (${stats.hits}/${playedRows.length}).`
-        : "Inga matcher avgjorda än.",
-      `VM-vinnartips: ${winner}.`,
-    ];
-    verdict = parts.join(" ");
+  return {
+    name, counts, pct, totalPicks, played, correct, hitRate,
+    bucket, bRate, loneWins, loneLosses, blindSpots, unique, gimme,
+    curStreak, bestStreak, twin, rival,
+    myPts, myRank, leaderPts, avgPts, remaining,
+    winner: state.picks.winnerPicks[name] || "",
+  };
+}
+
+// Build punchy, data-driven insight sentences (the "wow" layer)
+function playerNarrative(ix) {
+  const out = [];
+  const favBucket = ["1", "X", "2"].sort((a, b) => ix.counts[b] - ix.counts[a])[0];
+  const favName = { "1": "hemmaseger", X: "kryss", "2": "bortaseger" }[favBucket];
+  const favPct = ix.pct(ix.counts[favBucket]);
+
+  // 1. Identity / bias + payoff
+  if (ix.played >= 3 && ix.bRate(favBucket) != null) {
+    const r = ix.bRate(favBucket);
+    const verdict = r >= 60 ? "och det lönar sig" : r <= 35 ? "men det straffar sig" : "med blandat utfall";
+    out.push({ icon: "🎯", t: `Lutar mot ${favName} (${favPct}% av tipsen) — träffar ${r}% av dem, ${verdict}.` });
+  } else {
+    out.push({ icon: "🎯", t: `Tippar ${favName} oftast (${favPct}% av alla tips).` });
   }
-  return { counts, pct, profile, agree, disagree, hitRate, winner, verdict };
+
+  // 2. Lone wolf / contrarian edge
+  if (ix.loneWins > 0) {
+    out.push({ icon: "🐺", t: `Ensamvarg-bonus: ${ix.loneWins} rätt där få andra vågade samma — det är här ${ix.name} tjänar mark på fältet.` });
+  } else if (ix.played >= 5) {
+    out.push({ icon: "🐑", t: `Säker spelare: nästan alla rätt kom från matcher där fältet höll med. Inga djärva kupp ännu.` });
+  }
+
+  // 3. Blind spot
+  if (ix.blindSpots > 0) {
+    out.push({ icon: "🕳️", t: `Blind fläck: ${ix.blindSpots} ${ix.blindSpots === 1 ? "match" : "matcher"} där alla andra prickade rätt utom ${ix.name}.` });
+  }
+
+  // 4. Twin
+  if (ix.twin && ix.twin.sim >= 0.7) {
+    out.push({ icon: "👯", t: `Tipstvilling med ${ix.twin.name} — ${Math.round(ix.twin.sim * 100)}% identiska tips. Svårt att vinna ligan om de tippar likadant.` });
+  }
+  // 5. Rival / independence
+  if (ix.rival && ix.rival.sim <= 0.45) {
+    out.push({ icon: "⚔️", t: `Störst oenighet med ${ix.rival.name} (bara ${Math.round(ix.rival.sim * 100)}% lika) — deras inbördes resultat avgör mycket.` });
+  }
+
+  // 6. Uniqueness
+  if (ix.unique >= 3) {
+    out.push({ icon: "💎", t: `${ix.unique} helt unika tips som ingen annan i gänget har — hög egen profil.` });
+  }
+
+  // 7. Streak
+  if (ix.curStreak >= 2) out.push({ icon: "🔥", t: `Hett just nu: ${ix.curStreak} rätt i rad.` });
+  else if (ix.bestStreak >= 3) out.push({ icon: "📈", t: `Längsta svit: ${ix.bestStreak} rätt i rad.` });
+
+  // 8. Standing context
+  if (ix.played >= 1) {
+    if (ix.myRank === 1) out.push({ icon: "👑", t: `Leder ligan med ${ix.myPts} p, ${(ix.myPts - ix.avgPts).toFixed(1)} p över snittet.` });
+    else out.push({ icon: "📊", t: `${ix.myPts} p — plats ${ix.myRank}, ${ix.leaderPts - ix.myPts} p bakom ledaren. ${ix.remaining} tippade matcher kvar att hämta in på.` });
+  }
+
+  return out;
 }
 
 function openPlayer(name) {
   const st = playerStats(name);
-  const pat = playerPatterns(name);
+  const ix = playerInsights(name);
+  const narr = playerNarrative(ix);
+
+  const insightCards = narr
+    .map((n) => `<div class="insight"><span class="insight-ico">${n.icon}</span><span class="insight-txt">${n.t}</span></div>`)
+    .join("");
+
+  const bRateTxt = (k) => (ix.bRate(k) == null ? "–" : `${ix.bRate(k)}%`);
+  const dist = `
+    <div class="pat-dist">
+      <div class="pat-cell"><span class="pat-lbl">Hemma · 1</span><span class="pat-val">${ix.counts["1"]}</span><span class="pat-pct">träff ${bRateTxt("1")}</span></div>
+      <div class="pat-cell"><span class="pat-lbl">Kryss · X</span><span class="pat-val">${ix.counts.X}</span><span class="pat-pct">träff ${bRateTxt("X")}</span></div>
+      <div class="pat-cell"><span class="pat-lbl">Borta · 2</span><span class="pat-val">${ix.counts["2"]}</span><span class="pat-pct">träff ${bRateTxt("2")}</span></div>
+    </div>`;
+
   const items = st.rows
     .filter((r) => r.pick)
     .map((r) => {
@@ -568,12 +765,7 @@ function openPlayer(name) {
       </li>`;
     })
     .join("");
-  const dist = `
-    <div class="pat-dist">
-      <div class="pat-cell"><span class="pat-lbl">1</span><span class="pat-val">${pat.counts["1"]}</span><span class="pat-pct">${pat.pct(pat.counts["1"])}%</span></div>
-      <div class="pat-cell"><span class="pat-lbl">X</span><span class="pat-val">${pat.counts.X}</span><span class="pat-pct">${pat.pct(pat.counts.X)}%</span></div>
-      <div class="pat-cell"><span class="pat-lbl">2</span><span class="pat-val">${pat.counts["2"]}</span><span class="pat-pct">${pat.pct(pat.counts["2"])}%</span></div>
-    </div>`;
+
   document.getElementById("player-body").innerHTML = `
     <header class="detail-header">
       <div class="player-hero">
@@ -582,25 +774,26 @@ function openPlayer(name) {
           <div class="detail-teams">${name}</div>
           <div class="detail-meta">
             <span class="detail-score">${st.pts} p</span>
-            <span class="player-stats">${st.hits} rätt · ${st.misses} fel · ${st.blanks} blank</span>
+            <span class="player-stats">${ix.correct} rätt av ${ix.played} · ${ix.hitRate != null ? ix.hitRate + "% träff" : "inga avgjorda"}</span>
           </div>
         </div>
       </div>
     </header>
     <section class="detail-section">
-      <h3>Tipsprofil</h3>
-      <p class="se-verdict">${pat.verdict}</p>
+      <h3>Djupanalys</h3>
+      <div class="insights">${insightCards}</div>
+    </section>
+    <section class="detail-section">
+      <h3>1X2-profil &amp; utdelning</h3>
       ${dist}
     </section>
     <section class="detail-section">
       <h3>VM-vinnare-tips</h3>
       <p class="winner-pick ${st.winnerHit ? "correct" : ""}">${st.winnerPick || "–"}</p>
     </section>
-    <section class="detail-section">
-      <h3>Alla tips (${st.rows.filter(r => r.pick).length})</h3>
-      <ul class="player-rows">${items}</ul>
-    </section>
+    ${collapsible("Alla tips (" + st.rows.filter((r) => r.pick).length + ")", `<section class="detail-section"><h3>x</h3><ul class="player-rows">${items}</ul></section>`)}
   `;
+  document.documentElement.classList.add("modal-open");
   document.getElementById("player").showModal();
 }
 
@@ -622,67 +815,146 @@ function swedenMatches() {
     .sort((a, b) => new Date(a.f?.DateUtc || 0) - new Date(b.f?.DateUtc || 0));
 }
 
-function swedenAnalysis() {
+function swedenBase() {
   const games = swedenMatches();
-  let played = 0, pts = 0, gf = 0, ga = 0;
-  const remaining = [];
-  for (const { m, f } of games) {
-    const { home, away } = resolvedScores(m);
-    if (home == null || away == null) { remaining.push({ m, f }); continue; }
+  let played = 0, pts = 0, gf = 0, ga = 0, w = 0, d = 0, l = 0;
+  const remaining = [], playedGames = [];
+  for (const g of games) {
+    const { home, away } = resolvedScores(g.m);
+    const live = findLive(g.m.homeEn, g.m.awayEn);
+    if (home == null || away == null) { remaining.push(g); continue; }
     played++;
-    const isHome = m.homeEn === "Sweden";
+    const isHome = g.m.homeEn === "Sweden";
     const swe = isHome ? home : away;
     const opp = isHome ? away : home;
     gf += swe; ga += opp;
-    if (swe > opp) pts += 3;
-    else if (swe === opp) pts += 1;
+    let res;
+    if (swe > opp) { pts += 3; w++; res = "V"; }
+    else if (swe === opp) { pts += 1; d++; res = "O"; }
+    else { l++; res = "F"; }
+    playedGames.push({ ...g, swe, opp, res });
   }
-  const remCount = remaining.length;
-  const maxRemPts = remCount * 3;
-  const projMax = pts + maxRemPts;
-  // Group F table
   const tables = computeGroupTables();
   const grpF = tables["Group F"] || [];
-  const sweRow = grpF.find((r) => r.name === "Sweden");
-  const sweRank = sweRow ? grpF.indexOf(sweRow) + 1 : null;
-
-  // Build narrative
-  let verdict;
-  if (played === 0) {
-    verdict = `Sverige spelar 3 matcher i Grupp F mot ${games.map(g => g.m.homeEn === "Sweden" ? g.m.awaySv : g.m.homeSv).join(", ")}. Historiskt brukar 4–5 poäng räcka för andraplatsen och 7 poäng säkrar gruppen.`;
-  } else if (played === 3) {
-    if (sweRank && sweRank <= 2) verdict = `Klart för slutspelet som ${sweRank === 1 ? "gruppvinnare" : "tvåa"} i Grupp F med ${pts} poäng (${gf}-${ga}).`;
-    else verdict = `Slutade ${sweRank}:a i gruppen med ${pts} poäng. Kvalificering som "bästa trea" kräver att andra grupper inte presterar bättre.`;
-  } else {
-    const need4 = Math.max(0, 4 - pts);
-    const need7 = Math.max(0, 7 - pts);
-    const can4 = need4 <= maxRemPts;
-    const can7 = need7 <= maxRemPts;
-    const lines = [
-      `Spelade: ${played}/3 · ${pts} p · mål ${gf}-${ga} · grupp-${sweRank || "?"}.`,
-      can7
-        ? `För gruppvinst: behöver ${need7} p av ${maxRemPts} möjliga (${need7 === 0 ? "redan klart" : `${need7 === 3 ? "1 V" : need7 === 4 ? "1 V + 1 O" : need7 === 6 ? "2 V" : need7 + " p"}`}).`
-        : `Gruppvinst inte längre matematiskt möjlig.`,
-      can4
-        ? `För andraplats: behöver ${need4} p (typisk gräns 4 p).`
-        : `Andraplats osäker, behöver bästa-trea-formel.`,
-      `Max möjligt: ${projMax} p.`,
-    ];
-    verdict = lines.join(" ");
-  }
-
-  return { played, pts, gf, ga, remaining, sweRank, verdict, grpF };
+  const sweRank = grpF.findIndex((r) => r.name === "Sweden") + 1 || null;
+  return { games, played, pts, gf, ga, w, d, l, remaining, playedGames, grpF, sweRank };
 }
 
-function renderSweden() {
+async function swedenMarket(remaining) {
+  // For each remaining Sweden game, fetch odds → Sweden win/draw probability
+  const out = [];
+  for (const g of remaining) {
+    let pWin = null, pDraw = null;
+    try {
+      const eid = await getEventId(g.m.homeEn, g.m.awayEn, g.f?.DateUtc);
+      if (eid) {
+        const summary = await getSummary(eid);
+        const probs = impliedProbs(summary.pickcenter?.[0] || summary.odds?.[0]);
+        if (probs) {
+          const isHome = g.m.homeEn === "Sweden";
+          pWin = isHome ? probs.home : probs.away;
+          pDraw = probs.draw;
+        }
+      }
+    } catch (e) { /* ignore */ }
+    out.push({ ...g, pWin, pDraw });
+  }
+  return out;
+}
+
+async function swedenNews() {
+  // Pull Sweden-tagged news from any Sweden match summary
   const games = swedenMatches();
-  if (!games.length) {
-    document.getElementById("sweden").innerHTML = `<p class="hint">Inga Sverige-matcher i schemat.</p>`;
+  for (const g of games) {
+    try {
+      const eid = await getEventId(g.m.homeEn, g.m.awayEn, g.f?.DateUtc);
+      if (!eid) continue;
+      const summary = await getSummary(eid);
+      const arts = (summary.news?.articles || []).filter((a) =>
+        (a.categories || []).some((c) => c.type === "team" && /sweden/i.test(c.description || "")),
+      );
+      if (arts.length) return arts.slice(0, 3);
+    } catch (e) { /* ignore */ }
+  }
+  return [];
+}
+
+function swedenNarrative(base, market) {
+  const out = [];
+  const { played, pts, gf, ga, w, d, l, remaining, sweRank, grpF } = base;
+  const oppName = (g) => (g.m.homeEn === "Sweden" ? g.m.awaySv : g.m.homeSv);
+
+  // 1. Status line
+  if (played === 0) {
+    out.push({ icon: "🇸🇪", t: `Sverige möter ${base.games.map(oppName).join(", ")} i Grupp F. Topp 2 går vidare direkt, plus de 8 bästa treorna av 12 — i praktiken brukar 4 p räcka för avancemang, 7 p vinner gruppen.` });
+  } else {
+    out.push({ icon: "📊", t: `${pts} p efter ${played} ${played === 1 ? "match" : "matcher"} (${w}V ${d}O ${l}F, mål ${gf}–${ga}) — ${sweRank}:a i Grupp F.` });
+  }
+
+  // 2. Qualification math (format-aware)
+  const maxRem = remaining.length * 3;
+  const projMax = pts + maxRem;
+  if (remaining.length > 0 && played > 0) {
+    const need2nd = Math.max(0, 4 - pts);
+    const need1st = Math.max(0, 7 - pts);
+    if (projMax < 3) out.push({ icon: "❌", t: `Matematiskt mycket tungt: når som mest ${projMax} p, vilket sällan räcker ens som bästa trea.` });
+    else if (need2nd === 0) out.push({ icon: "✅", t: `Redan på ${pts} p — historiskt nog för åtminstone andraplats. Fokus nu på gruppseger och seedning.` });
+    else {
+      const phrase = need2nd <= 1 ? "1 poäng (oavgjort räcker)" : need2nd <= 3 ? "en vinst" : `${need2nd} p`;
+      out.push({ icon: "🎯", t: `Behöver ~${phrase} av ${maxRem} möjliga för trygg andraplats. Gruppseger kräver ytterligare ${need1st} p.` });
+    }
+  } else if (played === 3) {
+    if (sweRank <= 2) out.push({ icon: "✅", t: `Klart för slutspel som ${sweRank === 1 ? "gruppvinnare" : "tvåa"}.` });
+    else if (sweRank === 3) out.push({ icon: "⏳", t: `3:a med ${pts} p — avancemang hänger på bästa-trea-racet mot övriga grupper. ${pts >= 4 ? "4 p ger ofta en plats." : "Under 4 p är det nervöst."}` });
+    else out.push({ icon: "❌", t: `Utslagna — ${sweRank}:a i gruppen räcker inte.` });
+  }
+
+  // 3. Market expectation for remaining matches
+  const withOdds = market.filter((g) => g.pWin != null);
+  if (withOdds.length) {
+    const xPts = withOdds.reduce((s, g) => s + 3 * g.pWin + 1 * g.pDraw, 0);
+    const projFinal = pts + xPts;
+    const detail = withOdds
+      .map((g) => `${oppName(g)} ${Math.round(g.pWin * 100)}% vinst`)
+      .join(", ");
+    let bucket;
+    if (projFinal >= 6.5) bucket = "marknaden ser Sverige som klar favorit att gå vidare";
+    else if (projFinal >= 4) bucket = "marknaden lutar åt avancemang men med marginal";
+    else bucket = "marknaden ser Sverige som underdog att ta sig vidare";
+    out.push({ icon: "💰", t: `Marknadens odds ger Sverige i snitt ${xPts.toFixed(1)} p på resterande (${detail}) → ~${projFinal.toFixed(1)} p totalt. Kort sagt: ${bucket}.` });
+  }
+
+  // 4. Biggest threat / rival form in group
+  const rivals = grpF.filter((r) => r.name !== "Sweden");
+  if (rivals.length && played > 0) {
+    const top = rivals[0];
+    if (grpF[0] && grpF[0].name !== "Sweden") {
+      out.push({ icon: "⚠️", t: `${top.sv} leder gruppen (${top.pts} p, mål ${top.gf}–${top.ga}) och är just nu det lag Sverige jagar.` });
+    } else {
+      const chaser = rivals.sort((a, b) => b.pts - a.pts)[0];
+      out.push({ icon: "👀", t: `Närmaste utmanare är ${chaser.sv} på ${chaser.pts} p — den inbördes matchen kan bli avgörande.` });
+    }
+  }
+
+  // 5. Form read
+  if (played >= 2) {
+    const scored = gf / played, conceded = ga / played;
+    if (conceded >= 1.5) out.push({ icon: "🛡️", t: `Defensiv oro: ${conceded.toFixed(1)} insläppta per match. Sverige måste täta till bakåt för att hålla undan.` });
+    else if (scored < 1) out.push({ icon: "🥶", t: `Måltorka: bara ${gf} mål på ${played} matcher. Avslutet måste vässas.` });
+  }
+
+  return out;
+}
+
+async function renderSweden() {
+  const el = document.getElementById("sweden");
+  const base = swedenBase();
+  if (!base.games.length) {
+    el.innerHTML = `<p class="empty-state">Inga Sverige-matcher i schemat.</p>`;
     return;
   }
-  const ana = swedenAnalysis();
 
-  const matchCards = games
+  const matchCards = base.games
     .map(({ m, idx, f }) => {
       const { home, away } = resolvedScores(m);
       const live = findLive(m.homeEn, m.awayEn);
@@ -691,52 +963,38 @@ function renderSweden() {
       if (isLive) scoreLine = `<span class="se-score live">${live.homeScore}–${live.awayScore} · ${live.clock}</span>`;
       else if (home != null) scoreLine = `<span class="se-score">${home}–${away}</span>`;
       else scoreLine = `<span class="se-score pending">${f?.DateUtc ? formatDate(f.DateUtc) : ""}</span>`;
-      const magnusBadge = isMagnusMatch(m) ? `<span class="magnus-badge">🎟️ Magnus on tour</span>` : "";
+      const ramenBadge = isRamenMatch(m) ? `<span class="magnus-badge">🎟️ Ramen on tour</span>` : "";
       return `<article class="match" data-idx="${idx}">
-        <div class="match-head">
-          <div class="match-teams">
-            ${teamLogoHtml(m.homeEn)} ${m.homeSv} – ${m.awaySv} ${teamLogoHtml(m.awayEn)}
-          </div>
-          ${scoreLine}
+        <div class="mc-fixture">
+          <div class="mc-team home">${teamLogoHtml(m.homeEn)}<span class="mc-name">${m.homeSv}</span></div>
+          <div class="mc-center">${scoreLine}</div>
+          <div class="mc-team away"><span class="mc-name">${m.awaySv}</span>${teamLogoHtml(m.awayEn)}</div>
         </div>
-        ${magnusBadge}
+        ${ramenBadge}
       </article>`;
     })
     .join("");
 
-  const tableRows = ana.grpF
+  const tableRows = base.grpF
     .map(
       (r, i) => `<tr class="${i < 2 ? "q-top2" : i === 2 ? "q-third" : ""} ${r.name === "Sweden" ? "is-sweden" : ""}">
         <td class="pos">${i + 1}</td>
         <td class="team">${teamLogoHtml(r.name, "sm")} ${r.sv}</td>
-        <td>${r.p}</td>
-        <td>${r.w}</td>
-        <td>${r.d}</td>
-        <td>${r.l}</td>
-        <td>${r.gf}-${r.ga}</td>
-        <td class="pts">${r.pts}</td>
+        <td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td>
+        <td>${r.gf}-${r.ga}</td><td class="pts">${r.pts}</td>
       </tr>`,
     )
     .join("");
 
-  document.getElementById("sweden").innerHTML = `
+  el.innerHTML = `
     <section class="se-summary">
-      <div class="se-kpi">
-        <span class="se-kpi-lbl">Poäng</span>
-        <span class="se-kpi-val">${ana.pts}</span>
-      </div>
-      <div class="se-kpi">
-        <span class="se-kpi-lbl">Mål</span>
-        <span class="se-kpi-val">${ana.gf}-${ana.ga}</span>
-      </div>
-      <div class="se-kpi">
-        <span class="se-kpi-lbl">Position</span>
-        <span class="se-kpi-val">${ana.sweRank ? ana.sweRank + ":a" : "–"}</span>
-      </div>
+      <div class="se-kpi"><span class="se-kpi-lbl">Poäng</span><span class="se-kpi-val">${base.pts}</span></div>
+      <div class="se-kpi"><span class="se-kpi-lbl">Mål</span><span class="se-kpi-val">${base.gf}-${base.ga}</span></div>
+      <div class="se-kpi"><span class="se-kpi-lbl">Position</span><span class="se-kpi-val">${base.sweRank ? base.sweRank + ":a" : "–"}</span></div>
     </section>
     <section class="detail-section">
-      <h3>Prognos</h3>
-      <p class="se-verdict">${ana.verdict}</p>
+      <h3>Proffsanalys</h3>
+      <div id="se-insights" class="insights"><div class="skel skel-line"></div><div class="skel skel-line"></div></div>
     </section>
     <section class="detail-section">
       <h3>Sveriges matcher</h3>
@@ -751,7 +1009,39 @@ function renderSweden() {
         </table>
       </div>
     </section>
+    <div id="se-news" class="detail-section"></div>
   `;
+
+  // Async enrich: odds-based market + news
+  const market = await swedenMarket(base.remaining);
+  const narr = swedenNarrative(base, market);
+  const insEl = document.getElementById("se-insights");
+  if (insEl) {
+    insEl.innerHTML = narr
+      .map((n) => `<div class="insight"><span class="insight-ico">${n.icon}</span><span class="insight-txt">${n.t}</span></div>`)
+      .join("");
+  }
+  const news = await swedenNews();
+  const newsEl = document.getElementById("se-news");
+  if (newsEl && news.length) {
+    newsEl.innerHTML = `<h3>Senaste om Sverige</h3><ul class="news-list">${news
+      .map((a) => `<li><a href="${a.links?.web?.href || "#"}" target="_blank" rel="noopener">${a.headline}</a>${a.description ? `<span class="news-desc">${a.description}</span>` : ""}</li>`)
+      .join("")}</ul>`;
+  }
+}
+
+function extractGoals(summary) {
+  const out = [];
+  for (const e of summary.keyEvents || []) {
+    const t = (e.type?.text || "").toLowerCase();
+    if (!t.includes("goal")) continue;
+    if (t.includes("own")) continue; // own goals not credited
+    const scorer = e.participants?.[0]?.athlete?.displayName;
+    if (!scorer) continue;
+    const isPen = /penalty/i.test(e.text || "") || t.includes("penalty");
+    out.push({ scorer, team: e.team?.displayName || "", penalty: isPen });
+  }
+  return out;
 }
 
 async function renderHighlights() {
@@ -761,54 +1051,87 @@ async function renderHighlights() {
     .filter(({ f }) => f?.HomeTeamScore != null && f?.AwayTeamScore != null)
     .sort((a, b) => new Date(b.f.DateUtc) - new Date(a.f.DateUtc));
   if (!playedGames.length) {
-    container.innerHTML = `<p class="hint">Inga spelade matcher än.</p>`;
+    container.innerHTML = `<p class="empty-state">Inga spelade matcher än. Skytteligan och klippen fylls på när matcherna spelats.</p>`;
     return;
   }
 
   container.innerHTML = `<div class="skel skel-card"></div><div class="skel skel-card"></div>`;
   const groups = [];
+  const scorers = new Map(); // name -> { name, team, goals, pens }
   for (const { m, idx, f } of playedGames) {
     try {
       const eid = await getEventId(m.homeEn, m.awayEn, f.DateUtc);
       if (!eid) continue;
       const summary = await getSummary(eid);
+      for (const g of extractGoals(summary)) {
+        const key = g.scorer + "|" + g.team;
+        const rec = scorers.get(key) || { name: g.scorer, team: g.team, goals: 0, pens: 0 };
+        rec.goals++;
+        if (g.penalty) rec.pens++;
+        scorers.set(key, rec);
+      }
       const videos = (summary.videos || []).filter((v) => v.links?.source?.href);
-      if (!videos.length) continue;
-      groups.push({ m, idx, f, videos });
+      if (videos.length) groups.push({ m, idx, f, videos });
     } catch (e) {
-      console.warn("highlight fetch failed for match", idx, e);
+      console.warn("highlight/goal fetch failed for match", idx, e);
     }
   }
-  if (!groups.length) {
-    container.innerHTML = `<p class="hint">Inga videoklipp tillgängliga än.</p>`;
-    return;
+
+  const topScorers = [...scorers.values()].sort(
+    (a, b) => b.goals - a.goals || b.pens - a.pens || a.name.localeCompare(b.name, "sv"),
+  );
+
+  let skyttHtml = "";
+  if (topScorers.length) {
+    let rank = 0, prev = null, dr = 0;
+    const rows = topScorers.slice(0, 15).map((s) => {
+      rank++;
+      if (s.goals !== prev) dr = rank;
+      prev = s.goals;
+      const pen = s.pens ? `<span class="sk-pen">${s.pens} straff</span>` : "";
+      return `<li class="sk-row">
+        <span class="sk-rank ${dr === 1 ? "lead" : ""}">${dr}</span>
+        <span class="sk-flag">${teamLogoHtml(s.team, "sm")}</span>
+        <span class="sk-name">${s.name}${pen}</span>
+        <span class="sk-goals">${s.goals}</span>
+      </li>`;
+    }).join("");
+    skyttHtml = `<section class="block-inner sk-wrap">
+      <div class="section-head"><h2>Skytteliga</h2><span class="section-sub">${topScorers.length} målskyttar</span></div>
+      <ol class="sk-list">${rows}</ol>
+    </section>`;
   }
-  container.innerHTML = groups
-    .map(({ m, idx, f, videos }) => {
-      const score = `${f.HomeTeamScore}–${f.AwayTeamScore}`;
-      const items = videos
-        .map((v) => {
-          const src = v.links.source.href;
-          const poster = v.thumbnail || "";
-          const dur = v.duration ? `${v.duration}s` : "";
-          return `<figure class="hl">
-            <video class="hl-video" controls preload="none" playsinline poster="${poster}" src="${src}"></video>
-            <figcaption class="hl-cap">
-              <span class="hl-title">${v.headline || ""}</span>
-              <span class="hl-dur">${dur}</span>
-            </figcaption>
-          </figure>`;
+
+  const hlHtml = groups.length
+    ? groups
+        .map(({ m, idx, f, videos }) => {
+          const score = `${f.HomeTeamScore}–${f.AwayTeamScore}`;
+          const items = videos
+            .map((v) => {
+              const src = v.links.source.href;
+              const poster = v.thumbnail || "";
+              const dur = v.duration ? `${v.duration}s` : "";
+              return `<figure class="hl">
+                <video class="hl-video" controls preload="none" playsinline poster="${poster}" src="${src}"></video>
+                <figcaption class="hl-cap">
+                  <span class="hl-title">${v.headline || ""}</span>
+                  <span class="hl-dur">${dur}</span>
+                </figcaption>
+              </figure>`;
+            })
+            .join("");
+          return `<section class="hl-match" data-open-match="${idx}">
+            <div class="hl-match-head">
+              <span class="hl-match-teams">${teamLogoHtml(m.homeEn, "sm")} ${m.homeSv} ${score} ${m.awaySv} ${teamLogoHtml(m.awayEn, "sm")}</span>
+              <span class="hl-match-date">${formatDate(f.DateUtc)}</span>
+            </div>
+            <div class="hl-grid">${items}</div>
+          </section>`;
         })
-        .join("");
-      return `<section class="hl-match" data-open-match="${idx}">
-        <div class="hl-match-head">
-          <span class="hl-match-teams">${teamLogoHtml(m.homeEn, "sm")} ${m.homeSv} ${score} ${m.awaySv} ${teamLogoHtml(m.awayEn, "sm")}</span>
-          <span class="hl-match-date">${formatDate(f.DateUtc)}</span>
-        </div>
-        <div class="hl-grid">${items}</div>
-      </section>`;
-    })
-    .join("");
+        .join("")
+    : `<p class="empty-state">Inga videoklipp tillgängliga än.</p>`;
+
+  container.innerHTML = `${skyttHtml}<div class="section-head hl-sep"><h2>Höjdpunkter</h2></div>${hlHtml}`;
 }
 
 const KO_ROUNDS = [
@@ -1021,11 +1344,12 @@ document.addEventListener("click", (e) => {
 });
 
 function bindBackdropClose(id) {
-  document.getElementById(id).addEventListener("click", (e) => {
-    const dlg = e.currentTarget;
+  const dlg = document.getElementById(id);
+  dlg.addEventListener("click", (e) => {
     const r = dlg.getBoundingClientRect();
     if (e.clientY < r.top || e.clientY > r.bottom || e.clientX < r.left || e.clientX > r.right) dlg.close();
   });
+  dlg.addEventListener("close", () => document.documentElement.classList.remove("modal-open"));
 }
 bindBackdropClose("detail");
 bindBackdropClose("player");
@@ -1246,6 +1570,7 @@ async function openDetail(idx) {
     ${detailOurPicksHtml(m, outcome)}
     <div id="detail-extra"><div class="skel skel-line"></div><div class="skel skel-line"></div></div>
   `;
+  document.documentElement.classList.add("modal-open");
   dlg.showModal();
 
   try {
@@ -1272,16 +1597,21 @@ async function openDetail(idx) {
   }
 }
 
-function detailProbabilityHtml(oddsObj, m) {
-  if (!oddsObj) return "";
+function impliedProbs(oddsObj) {
+  if (!oddsObj) return null;
   const h = americanToDecimal(oddsObj.homeTeamOdds?.moneyLine);
   const d = americanToDecimal(oddsObj.drawOdds?.moneyLine);
   const a = americanToDecimal(oddsObj.awayTeamOdds?.moneyLine);
-  if (h == null || d == null || a == null) return "";
+  if (h == null || d == null || a == null) return null;
   const inv = [1 / h, 1 / d, 1 / a];
   const sum = inv.reduce((x, y) => x + y, 0);
-  const probs = inv.map((p) => p / sum);
-  const pct = probs.map((p) => Math.round(p * 100));
+  return { home: inv[0] / sum, draw: inv[1] / sum, away: inv[2] / sum };
+}
+
+function detailProbabilityHtml(oddsObj, m) {
+  const p = impliedProbs(oddsObj);
+  if (!p) return "";
+  const pct = [p.home, p.draw, p.away].map((x) => Math.round(x * 100));
   return `<section class="detail-section">
     <h3>Vinstsannolikhet <span class="provider">(implicit ur odds)</span></h3>
     <div class="prob-rows">
@@ -1345,9 +1675,24 @@ function detailH2HHtml(summary) {
 }
 
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () =>
-    navigator.serviceWorker.register("sw.js").catch(() => {}),
-  );
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloadedForUpdate = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController || reloadedForUpdate) return; // skip reload on first install
+    reloadedForUpdate = true;
+    location.reload();
+  });
+  window.addEventListener("load", async () => {
+    try {
+      const reg = await navigator.serviceWorker.register("sw.js");
+      // Check for a newer service worker now and whenever the tab refocuses.
+      reg.update();
+      setInterval(() => reg.update(), 5 * 60_000);
+      window.addEventListener("focus", () => reg.update());
+    } catch (e) {
+      /* ignore */
+    }
+  });
 }
 
 load()

@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-15T01:46:00Z",
+  "fetchedAt": "2026-06-15T17:09:33Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -142,9 +142,9 @@
       "HomeTeam": "Sweden",
       "AwayTeam": "Tunisia",
       "Group": "Group F",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 5,
+      "AwayTeamScore": 1,
+      "Winner": "Sweden"
     },
     {
       "MatchNumber": 14,
