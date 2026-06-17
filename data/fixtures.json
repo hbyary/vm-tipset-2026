@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-16T23:56:26Z",
+  "fetchedAt": "2026-06-17T13:04:06Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -214,9 +214,9 @@
       "HomeTeam": "Iraq",
       "AwayTeam": "Norway",
       "Group": "Group I",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 1,
+      "AwayTeamScore": 4,
+      "Winner": "Norway"
     },
     {
       "MatchNumber": 19,
@@ -226,9 +226,9 @@
       "HomeTeam": "Argentina",
       "AwayTeam": "Algeria",
       "Group": "Group J",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 3,
+      "AwayTeamScore": 0,
+      "Winner": "Argentina"
     },
     {
       "MatchNumber": 20,
@@ -238,9 +238,9 @@
       "HomeTeam": "Austria",
       "AwayTeam": "Jordan",
       "Group": "Group J",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 3,
+      "AwayTeamScore": 1,
+      "Winner": "Austria"
     },
     {
       "MatchNumber": 23,
