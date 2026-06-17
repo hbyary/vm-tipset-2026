@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-17T21:25:14Z",
+  "fetchedAt": "2026-06-17T23:00:57Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -262,9 +262,9 @@
       "HomeTeam": "England",
       "AwayTeam": "Croatia",
       "Group": "Group L",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 4,
+      "AwayTeamScore": 2,
+      "Winner": "England"
     },
     {
       "MatchNumber": 21,
