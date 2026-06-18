@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-18T18:28:37Z",
+  "fetchedAt": "2026-06-18T21:06:09Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -298,9 +298,9 @@
       "HomeTeam": "Czechia",
       "AwayTeam": "South Africa",
       "Group": "Group A",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 1,
+      "AwayTeamScore": 1,
+      "Winner": "Draw"
     },
     {
       "MatchNumber": 26,
@@ -310,9 +310,9 @@
       "HomeTeam": "Switzerland",
       "AwayTeam": "Bosnia and Herzegovina",
       "Group": "Group B",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 4,
+      "AwayTeamScore": 1,
+      "Winner": "Switzerland"
     },
     {
       "MatchNumber": 27,
