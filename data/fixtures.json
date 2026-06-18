@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-18T02:01:48Z",
+  "fetchedAt": "2026-06-18T07:16:42Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -274,9 +274,9 @@
       "HomeTeam": "Ghana",
       "AwayTeam": "Panama",
       "Group": "Group L",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 1,
+      "AwayTeamScore": 0,
+      "Winner": "Ghana"
     },
     {
       "MatchNumber": 24,
@@ -286,9 +286,9 @@
       "HomeTeam": "Uzbekistan",
       "AwayTeam": "Colombia",
       "Group": "Group K",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 1,
+      "AwayTeamScore": 3,
+      "Winner": "Colombia"
     },
     {
       "MatchNumber": 25,
