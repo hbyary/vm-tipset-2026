@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-19T21:45:39Z",
+  "fetchedAt": "2026-06-19T23:02:24Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -346,9 +346,9 @@
       "HomeTeam": "USA",
       "AwayTeam": "Australia",
       "Group": "Group D",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 2,
+      "AwayTeamScore": 0,
+      "Winner": "USA"
     },
     {
       "MatchNumber": 30,
