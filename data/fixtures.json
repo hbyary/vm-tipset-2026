@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-19T02:19:09Z",
+  "fetchedAt": "2026-06-19T07:40:29Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -334,9 +334,9 @@
       "HomeTeam": "Mexico",
       "AwayTeam": "Korea Republic",
       "Group": "Group A",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 1,
+      "AwayTeamScore": 0,
+      "Winner": "Mexico"
     },
     {
       "MatchNumber": 32,
