@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-20T06:26:24Z",
+  "fetchedAt": "2026-06-20T09:50:53Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -365,7 +365,7 @@
     {
       "MatchNumber": 29,
       "RoundNumber": 2,
-      "DateUtc": "2026-06-20 01:00:00Z",
+      "DateUtc": "2026-06-20 00:30:00Z",
       "Location": "Philadelphia Stadium",
       "HomeTeam": "Brazil",
       "AwayTeam": "Haiti",
@@ -377,7 +377,7 @@
     {
       "MatchNumber": 31,
       "RoundNumber": 2,
-      "DateUtc": "2026-06-20 04:00:00Z",
+      "DateUtc": "2026-06-20 03:00:00Z",
       "Location": "San Francisco Bay Area Stadium",
       "HomeTeam": "Türkiye",
       "AwayTeam": "Paraguay",
@@ -943,7 +943,7 @@
       "RoundNumber": 4,
       "DateUtc": "2026-07-01 01:00:00Z",
       "Location": "Mexico City Stadium",
-      "HomeTeam": "1A",
+      "HomeTeam": "Mexico",
       "AwayTeam": "3CEFHI",
       "Group": null,
       "HomeTeamScore": null,
@@ -979,7 +979,7 @@
       "RoundNumber": 4,
       "DateUtc": "2026-07-02 00:00:00Z",
       "Location": "San Francisco Bay Area Stadium",
-      "HomeTeam": "1D",
+      "HomeTeam": "USA",
       "AwayTeam": "3BEFIJ",
       "Group": null,
       "HomeTeamScore": null,
