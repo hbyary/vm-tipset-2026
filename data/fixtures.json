@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-20T21:22:01Z",
+  "fetchedAt": "2026-06-20T22:44:09Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -406,9 +406,9 @@
       "HomeTeam": "Germany",
       "AwayTeam": "Côte d'Ivoire",
       "Group": "Group E",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 2,
+      "AwayTeamScore": 1,
+      "Winner": "Germany"
     },
     {
       "MatchNumber": 34,
