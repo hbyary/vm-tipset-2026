@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-20T19:46:09Z",
+  "fetchedAt": "2026-06-20T21:22:01Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -394,9 +394,9 @@
       "HomeTeam": "Netherlands",
       "AwayTeam": "Sweden",
       "Group": "Group F",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 5,
+      "AwayTeamScore": 1,
+      "Winner": "Netherlands"
     },
     {
       "MatchNumber": 33,
