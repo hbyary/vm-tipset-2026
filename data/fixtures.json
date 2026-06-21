@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-21T20:13:21Z",
+  "fetchedAt": "2026-06-21T21:56:17Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -454,9 +454,9 @@
       "HomeTeam": "Belgium",
       "AwayTeam": "IR Iran",
       "Group": "Group G",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 0,
+      "AwayTeamScore": 0,
+      "Winner": "Draw"
     },
     {
       "MatchNumber": 37,
