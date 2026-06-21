@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-21T00:12:59Z",
+  "fetchedAt": "2026-06-21T05:26:22Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -418,9 +418,9 @@
       "HomeTeam": "Ecuador",
       "AwayTeam": "Curaçao",
       "Group": "Group E",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 0,
+      "AwayTeamScore": 0,
+      "Winner": "Draw"
     },
     {
       "MatchNumber": 36,
