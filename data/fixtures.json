@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-21T16:47:45Z",
+  "fetchedAt": "2026-06-21T18:21:18Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -442,9 +442,9 @@
       "HomeTeam": "Spain",
       "AwayTeam": "Saudi Arabia",
       "Group": "Group H",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 4,
+      "AwayTeamScore": 0,
+      "Winner": "Spain"
     },
     {
       "MatchNumber": 39,
