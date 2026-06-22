@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-22T02:03:45Z",
+  "fetchedAt": "2026-06-22T08:40:02Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -478,9 +478,9 @@
       "HomeTeam": "New Zealand",
       "AwayTeam": "Egypt",
       "Group": "Group G",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 1,
+      "AwayTeamScore": 3,
+      "Winner": "Egypt"
     },
     {
       "MatchNumber": 43,
