@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-23T18:22:05Z",
+  "fetchedAt": "2026-06-23T20:34:27Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -538,9 +538,9 @@
       "HomeTeam": "Portugal",
       "AwayTeam": "Uzbekistan",
       "Group": "Group K",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 5,
+      "AwayTeamScore": 0,
+      "Winner": "Portugal"
     },
     {
       "MatchNumber": 45,
