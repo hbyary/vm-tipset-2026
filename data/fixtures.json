@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-23T22:17:58Z",
+  "fetchedAt": "2026-06-23T23:36:32Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -550,9 +550,9 @@
       "HomeTeam": "England",
       "AwayTeam": "Ghana",
       "Group": "Group L",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 0,
+      "AwayTeamScore": 0,
+      "Winner": "Draw"
     },
     {
       "MatchNumber": 46,
