@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-23T10:11:27Z",
+  "fetchedAt": "2026-06-23T13:22:59Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -1039,7 +1039,7 @@
       "RoundNumber": 4,
       "DateUtc": "2026-07-03 22:00:00Z",
       "Location": "Miami Stadium",
-      "HomeTeam": "1J",
+      "HomeTeam": "Argentina",
       "AwayTeam": "2H",
       "Group": null,
       "HomeTeamScore": null,
