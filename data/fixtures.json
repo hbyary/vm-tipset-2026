@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-24T20:01:21Z",
+  "fetchedAt": "2026-06-24T21:54:34Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -586,9 +586,9 @@
       "HomeTeam": "Switzerland",
       "AwayTeam": "Canada",
       "Group": "Group B",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 2,
+      "AwayTeamScore": 1,
+      "Winner": "Switzerland"
     },
     {
       "MatchNumber": 52,
@@ -598,9 +598,9 @@
       "HomeTeam": "Bosnia and Herzegovina",
       "AwayTeam": "Qatar",
       "Group": "Group B",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 3,
+      "AwayTeamScore": 1,
+      "Winner": "Bosnia and Herzegovina"
     },
     {
       "MatchNumber": 49,
