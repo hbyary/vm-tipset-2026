@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-24T04:00:02Z",
+  "fetchedAt": "2026-06-24T07:51:38Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -574,9 +574,9 @@
       "HomeTeam": "Colombia",
       "AwayTeam": "Congo DR",
       "Group": "Group K",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 1,
+      "AwayTeamScore": 0,
+      "Winner": "Colombia"
     },
     {
       "MatchNumber": 51,
