@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-23T23:36:32Z",
+  "fetchedAt": "2026-06-24T04:00:02Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -562,9 +562,9 @@
       "HomeTeam": "Panama",
       "AwayTeam": "Croatia",
       "Group": "Group L",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 0,
+      "AwayTeamScore": 1,
+      "Winner": "Croatia"
     },
     {
       "MatchNumber": 48,
