@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-25T22:05:13Z",
+  "fetchedAt": "2026-06-25T23:53:43Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -658,9 +658,9 @@
       "HomeTeam": "Curaçao",
       "AwayTeam": "Côte d'Ivoire",
       "Group": "Group E",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 0,
+      "AwayTeamScore": 2,
+      "Winner": "Côte d'Ivoire"
     },
     {
       "MatchNumber": 56,
@@ -670,9 +670,9 @@
       "HomeTeam": "Ecuador",
       "AwayTeam": "Germany",
       "Group": "Group E",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 2,
+      "AwayTeamScore": 1,
+      "Winner": "Ecuador"
     },
     {
       "MatchNumber": 57,
