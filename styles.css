@@ -25,6 +25,11 @@
 
 * { box-sizing: border-box; }
 
+html {
+  /* Stop iOS from auto-inflating text (which pushed nav labels out of layout) */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 html.modal-open, html.modal-open body { overflow: hidden; }
 
 html, body {
@@ -119,31 +124,40 @@ a { color: var(--accent); }
   border-top: 1px solid var(--border);
 }
 .navbtn {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   background: none;
   border: none;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  padding: 6px 2px;
+  padding: 6px 1px;
   color: var(--muted);
-  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.1px;
+  letter-spacing: 0;
   cursor: pointer;
   border-radius: 12px;
   transition: color 0.15s ease;
   -webkit-tap-highlight-color: transparent;
 }
+.navbtn span {
+  /* fluid: scales with screen width, clamped to a sane range */
+  font-size: clamp(8.5px, 2.6vw, 11px);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .navicon {
-  width: 24px;
-  height: 24px;
+  width: clamp(20px, 6vw, 24px);
+  height: clamp(20px, 6vw, 24px);
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
+  flex: none;
 }
 .navbtn.active { color: var(--accent); }
 .navbtn.active .navicon { filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.4)); }
@@ -338,6 +352,37 @@ section {
 .team-logo.sm { width: 18px; height: 18px; }
 .team-logo.lg { width: 44px; height: 44px; border-radius: 8px; }
 
+/* Collapsed older matches */
+.older-wrap {
+  margin-top: 18px;
+  border-top: 1px solid var(--border);
+}
+.older-wrap > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 4px 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.older-wrap > summary::-webkit-details-marker { display: none; }
+.older-count {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 11px;
+  color: var(--text-soft);
+}
+.older-wrap .col-chevron { margin-left: auto; color: var(--accent); transition: transform 0.2s ease; }
+.older-wrap[open] .col-chevron { transform: rotate(180deg); }
+.older-body { padding-top: 4px; }
+
 /* Day divider */
 .day-divider {
   font-size: 11px;
@@ -478,7 +523,8 @@ footer a { color: var(--muted); }
   padding: 0;
   width: 100%;
   max-width: 720px;
-  max-height: 92vh;
+  max-height: 90vh;
+  max-height: 90dvh;
   margin: auto auto 0;
   box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.5);
   overflow: hidden;
@@ -496,26 +542,34 @@ footer a { color: var(--muted); }
   to { transform: translateY(0); opacity: 1; }
 }
 #detail-body {
-  padding: 18px 16px calc(24px + var(--safe-bottom));
-  max-height: 92vh;
+  padding: 52px 16px calc(24px + var(--safe-bottom));
+  max-height: 90vh;
+  max-height: 90dvh;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
+/* Anchored to the viewport top-right so it is ALWAYS reachable, never under the notch */
 .detail-close {
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  width: 36px;
-  height: 36px;
+  position: fixed;
+  top: calc(var(--safe-top) + 12px);
+  right: 16px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--card-solid);
+  border: 1px solid var(--border-strong);
+  background: rgba(19, 28, 46, 0.92);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   color: var(--text);
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   cursor: pointer;
-  z-index: 1;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 .detail-header {
   padding-right: 50px;
@@ -1030,6 +1084,28 @@ footer a { color: var(--muted); }
 }
 .se-score.live { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
 .se-score.pending { background: transparent; color: var(--muted); font-weight: 500; }
+
+/* Goals tiebreaker race */
+.gr-actual { font-size: 12.5px; color: var(--muted); margin: 0 0 10px; line-height: 1.5; }
+.gr-actual strong { color: var(--text); }
+.gr-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.gr-row {
+  display: grid;
+  grid-template-columns: 22px 28px 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.gr-row:last-child { border-bottom: none; }
+.gr-lead { background: linear-gradient(90deg, rgba(250,204,21,0.12), transparent 80%); }
+.gr-rank { font-weight: 700; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
+.gr-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px; color: #0b1220; background: linear-gradient(135deg, var(--av1,#facc15), var(--av2,#fbbf24)); }
+.gr-name { font-weight: 700; }
+.gr-guess { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--text-soft); }
+.gr-dist { font-size: 11px; color: var(--muted); font-weight: 600; min-width: 48px; text-align: right; }
+.gr-lead .gr-dist { color: var(--accent); }
 tr.is-sweden { background: linear-gradient(90deg, rgba(250, 204, 21, 0.12), transparent) !important; }
 tr.is-sweden td { font-weight: 700; }
 
@@ -1046,13 +1122,33 @@ tr.is-sweden td { font-weight: 700; }
 }
 .sk-row {
   display: grid;
-  grid-template-columns: 26px 22px 1fr auto;
+  grid-template-columns: 26px 22px 1fr auto 12px;
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
   border-bottom: 1px solid var(--border);
+  cursor: pointer;
 }
 .sk-row:last-child { border-bottom: none; }
+.sk-row:active { background: rgba(255,255,255,0.05); }
+.sk-chev { color: var(--muted); font-size: 18px; text-align: center; }
+
+/* Scorer goal breakdown */
+.sg-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.sg-row {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 13px;
+}
+.sg-clock { font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+.sg-match { font-weight: 600; }
+.sg-pen { font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px; }
 .sk-rank {
   font-size: 13px;
   font-weight: 700;
@@ -1314,14 +1410,46 @@ tr.is-sweden td { font-weight: 700; }
   background: var(--card-solid);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 14px 12px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
+  overflow: hidden;
 }
 .group-card h3 {
   margin: 0 0 8px;
   font-size: 14px;
   letter-spacing: 0.5px;
 }
+.gc-summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 14px;
+}
+.gc-summary::-webkit-details-marker { display: none; }
+.gc-grp { font-weight: 800; font-size: 13px; letter-spacing: -0.01em; flex: none; }
+.gc-leaders {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-soft);
+  font-size: 12px;
+  font-weight: 600;
+}
+.gc-lead-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gc-sep { color: var(--muted); }
+.gc-meta {
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+.group-card .col-chevron { color: var(--accent); transition: transform 0.2s ease; flex: none; }
+.group-card[open] .col-chevron { transform: rotate(180deg); }
+.gc-body { padding: 0 12px 14px; }
 .group-table {
   width: 100%;
   border-collapse: collapse;
@@ -1532,7 +1660,8 @@ tr.is-sweden td { font-weight: 700; }
   padding: 0;
   width: 100%;
   max-width: 720px;
-  max-height: 92vh;
+  max-height: 90vh;
+  max-height: 90dvh;
   margin: auto auto 0;
   box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.5);
   overflow: hidden;
@@ -1541,8 +1670,9 @@ tr.is-sweden td { font-weight: 700; }
 #player::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(4px); }
 #player[open] { animation: sheetUp 0.25s ease-out; }
 #player-body {
-  padding: 18px 16px calc(24px + var(--safe-bottom));
-  max-height: 92vh;
+  padding: 52px 16px calc(24px + var(--safe-bottom));
+  max-height: 90vh;
+  max-height: 90dvh;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
