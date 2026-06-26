@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-26T20:18:30Z",
+  "fetchedAt": "2026-06-26T21:48:25Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -730,9 +730,9 @@
       "HomeTeam": "Norway",
       "AwayTeam": "France",
       "Group": "Group I",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 1,
+      "AwayTeamScore": 4,
+      "Winner": "France"
     },
     {
       "MatchNumber": 62,
@@ -742,9 +742,9 @@
       "HomeTeam": "Senegal",
       "AwayTeam": "Iraq",
       "Group": "Group I",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 5,
+      "AwayTeamScore": 0,
+      "Winner": "Senegal"
     },
     {
       "MatchNumber": 65,
