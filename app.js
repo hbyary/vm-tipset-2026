@@ -191,9 +191,7 @@ async function pollLive() {
       const home = comp.competitors?.find((x) => x.homeAway === "home");
       const away = comp.competitors?.find((x) => x.homeAway === "away");
       if (!home || !away) continue;
-      const homeName = espnTeamName(home.team.displayName);
-      const awayName = espnTeamName(away.team.displayName);
-      map[liveKey(homeName, awayName)] = {
+      map[liveKey(home.team.displayName, away.team.displayName)] = {
         state: e.status?.type?.state,
         clock: e.status?.displayClock,
         period: e.status?.period,
@@ -254,8 +252,13 @@ function espnTeamName(displayName) {
   return ESPN_ALIAS[displayName] || displayName;
 }
 
+// Canonical pairing key — normalised ESPN names so FD-sourced (picks/fixtures)
+// and ESPN-sourced (scoreboard) names always match, incl. the 8 aliased teams.
+function pairKey(home, away) {
+  return normTeam(toEspnName(home)) + "|" + normTeam(toEspnName(away));
+}
 function liveKey(homeEn, awayEn) {
-  return `${homeEn}|${awayEn}`;
+  return pairKey(homeEn, awayEn);
 }
 function findLive(homeEn, awayEn) {
   return state.live[liveKey(homeEn, awayEn)];
@@ -736,10 +739,114 @@ function playerNarrative(ix) {
   return out;
 }
 
+function winPath(name) {
+  const scores = computeScores();
+  const me = scores[name].pts;
+  const players = state.picks.players;
+  const ranked = players
+    .map((p) => ({ p, pts: scores[p].pts }))
+    .sort((a, b) => b.pts - a.pts);
+  const leaderPts = ranked[0].pts;
+  const isLeader = me === leaderPts;
+
+  // undecided group matches (no result yet)
+  const undecided = state.picks.groupStage.filter(
+    (m) => outcomeFromScores(resolvedScores(m).home, resolvedScores(m).away) == null,
+  );
+  const winnerOpen = !state.picks.actualWinner;
+  const myWinner = state.picks.winnerPicks[name];
+
+  // remaining points THIS player can still earn (where they have a pick)
+  const myRemain = undecided.filter((m) => m.picks[name]).length;
+  const maxMe = me + myRemain + (winnerOpen && myWinner ? 2 : 0);
+
+  // swing analysis vs a rival: only matches where picks DIFFER can move the gap
+  function swingVs(rival) {
+    let differ = 0;
+    const keyMatches = [];
+    for (const m of undecided) {
+      const a = m.picks[name];
+      const b = m.picks[rival];
+      if (a && b && a !== b) {
+        differ++;
+        keyMatches.push(m);
+      }
+    }
+    let winnerSwing = 0;
+    if (winnerOpen && myWinner && state.picks.winnerPicks[rival] && myWinner !== state.picks.winnerPicks[rival]) winnerSwing = 2;
+    return { differ, winnerSwing, maxSwing: differ + winnerSwing, keyMatches };
+  }
+
+  const lines = [];
+  const totalPicks = state.picks.groupStage.filter((m) => m.picks[name]).length;
+  if (totalPicks === 0) {
+    lines.push({ icon: "🫥", t: `${name} har inga tips registrerade — står utanför poängjakten. Lägg in tipsen för att vara med!` });
+    return { lines, maxMe };
+  }
+  if (isLeader) {
+    // who can still catch the leader?
+    const chasers = players
+      .filter((p) => p !== name)
+      .map((p) => {
+        const rem = undecided.filter((m) => m.picks[p]).length;
+        const max = scores[p].pts + rem + (winnerOpen && state.picks.winnerPicks[p] ? 2 : 0);
+        return { p, pts: scores[p].pts, max };
+      })
+      .filter((c) => c.max >= me)
+      .sort((a, b) => b.max - a.max);
+    if (!undecided.length) {
+      lines.push({ icon: "🏆", t: `Tävlingen är avgjord — ${name} vinner med ${me} p!` });
+    } else if (!chasers.length) {
+      lines.push({ icon: "🏆", t: `Matematiskt klar segrare — ingen kan längre nå ${me} p. Grattis!` });
+    } else {
+      const names = chasers.slice(0, 3).map((c) => `${c.p} (kan nå ${c.max})`).join(", ");
+      lines.push({ icon: "👑", t: `Leder med ${me} p. ${chasers.length} kan teoretiskt gå om: ${names}.` });
+      const top = chasers[0];
+      const sw = swingVs(top.p);
+      lines.push({
+        icon: "🛡️",
+        t: `Mot främsta utmanaren ${top.p}: ${sw.differ} kvarvarande matcher där ni tippat olika${sw.winnerSwing ? " + VM-vinnaren" : ""}. Håller du jämna steg där är titeln din.`,
+      });
+    }
+    return { lines, maxMe };
+  }
+
+  // chaser perspective vs the leader
+  const leaderName = ranked[0].p;
+  const gap = leaderPts - me;
+  const sw = swingVs(leaderName);
+  lines.push({ icon: "📊", t: `${gap} p bakom ledaren ${leaderName}. Du kan som mest nå ${maxMe} p.` });
+
+  if (sw.maxSwing < gap) {
+    lines.push({
+      icon: "⛔",
+      t: `Tufft: bara ${sw.differ} kvarvarande matcher där du och ${leaderName} tippat olika${sw.winnerSwing ? " (+ olika VM-vinnare)" : ""} — för få för att hämta in ${gap} p även om allt går din väg. Identiska tips i övriga matcher ändrar inget inbördes.`,
+    });
+  } else {
+    const need = Math.ceil((gap + 1) / 1);
+    lines.push({
+      icon: "🎯",
+      t: `Klättringen sker bara i de ${sw.differ} matcher där ni tippat olika — du måste vinna minst ${Math.min(sw.differ, gap + (sw.winnerSwing ? 0 : 1))} av dem (och hoppas ${leaderName} missar dem)${sw.winnerSwing ? ", eller pricka VM-vinnaren när hen inte gör det" : ""}.`,
+    });
+  }
+  if (sw.keyMatches.length) {
+    const km = sw.keyMatches
+      .slice(0, 3)
+      .map((m) => `${m.homeSv}–${m.awaySv} (du ${m.picks[name]}, ${leaderName} ${m.picks[leaderName]})`)
+      .join("; ");
+    lines.push({ icon: "🔑", t: `Nyckelmatcher: ${km}.` });
+  }
+  return { lines, maxMe };
+}
+
 function openPlayer(name) {
   const st = playerStats(name);
   const ix = playerInsights(name);
   const narr = playerNarrative(ix);
+  const path = winPath(name);
+  const pathCards = path.lines
+    .map((n) => `<div class="insight"><span class="insight-ico">${n.icon}</span><span class="insight-txt">${n.t}</span></div>`)
+    .join("");
 
   const insightCards = narr
     .map((n) => `<div class="insight"><span class="insight-ico">${n.icon}</span><span class="insight-txt">${n.t}</span></div>`)
@@ -781,6 +888,10 @@ function openPlayer(name) {
     <section class="detail-section">
       <h3>Djupanalys</h3>
       <div class="insights">${insightCards}</div>
+    </section>
+    <section class="detail-section">
+      <h3>Vägen till segern</h3>
+      <div class="insights">${pathCards}</div>
     </section>
     <section class="detail-section">
       <h3>1X2-profil &amp; utdelning</h3>
@@ -1043,8 +1154,23 @@ function extractGoals(summary) {
   return out;
 }
 
+async function mapLimit(items, limit, fn) {
+  const out = new Array(items.length);
+  let i = 0;
+  async function worker() {
+    while (i < items.length) {
+      const cur = i++;
+      out[cur] = await fn(items[cur], cur);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return out;
+}
+
+let _highlightsToken = 0;
 async function renderHighlights() {
   const container = document.getElementById("highlights");
+  const myToken = ++_highlightsToken; // guard against overlapping renders
   const playedGames = state.picks.groupStage
     .map((m, idx) => ({ m, idx, f: findFixture(m.homeEn, m.awayEn) }))
     .filter(({ f }) => f?.HomeTeamScore != null && f?.AwayTeamScore != null)
@@ -1055,25 +1181,35 @@ async function renderHighlights() {
   }
 
   container.innerHTML = `<div class="skel skel-card"></div><div class="skel skel-card"></div>`;
+
+  // Fetch all summaries in parallel (limited concurrency) instead of serially.
+  const fetched = await mapLimit(playedGames, 5, async (g) => {
+    try {
+      const eid = await getEventId(g.m.homeEn, g.m.awayEn, g.f.DateUtc);
+      if (!eid) return null;
+      const summary = await getSummary(eid);
+      return { ...g, summary };
+    } catch (e) {
+      console.warn("highlight fetch failed", g.idx, e);
+      return null;
+    }
+  });
+  if (myToken !== _highlightsToken) return; // a newer render started
+
   const groups = [];
   const scorers = new Map(); // name -> { name, team, goals, pens }
-  for (const { m, idx, f } of playedGames) {
-    try {
-      const eid = await getEventId(m.homeEn, m.awayEn, f.DateUtc);
-      if (!eid) continue;
-      const summary = await getSummary(eid);
-      for (const g of extractGoals(summary)) {
-        const key = g.scorer + "|" + g.team;
-        const rec = scorers.get(key) || { name: g.scorer, team: g.team, goals: 0, pens: 0 };
-        rec.goals++;
-        if (g.penalty) rec.pens++;
-        scorers.set(key, rec);
-      }
-      const videos = (summary.videos || []).filter((v) => v.links?.source?.href);
-      if (videos.length) groups.push({ m, idx, f, videos });
-    } catch (e) {
-      console.warn("highlight/goal fetch failed for match", idx, e);
+  for (const item of fetched) {
+    if (!item) continue;
+    const { m, idx, f, summary } = item;
+    for (const g of extractGoals(summary)) {
+      const key = g.scorer + "|" + g.team;
+      const rec = scorers.get(key) || { name: g.scorer, team: g.team, goals: 0, pens: 0 };
+      rec.goals++;
+      if (g.penalty) rec.pens++;
+      scorers.set(key, rec);
     }
+    const videos = (summary.videos || []).filter((v) => v.links?.source?.href);
+    if (videos.length) groups.push({ m, idx, f, videos });
   }
 
   const topScorers = [...scorers.values()].sort(
@@ -1110,17 +1246,20 @@ async function renderHighlights() {
               const src = v.links.source.href;
               const poster = v.thumbnail || "";
               const dur = v.duration ? `${v.duration}s` : "";
+              // Click-to-play: render a lightweight poster button; the <video>
+              // is only created when the user taps (keeps the tab fast).
               return `<figure class="hl">
-                <video class="hl-video" controls preload="none" playsinline poster="${poster}" src="${src}"></video>
-                <figcaption class="hl-cap">
-                  <span class="hl-title">${v.headline || ""}</span>
-                  <span class="hl-dur">${dur}</span>
-                </figcaption>
+                <button class="hl-thumb" data-video="${src}" data-poster="${poster}" aria-label="Spela klipp">
+                  ${poster ? `<img class="hl-poster" src="${poster}" alt="" loading="lazy" decoding="async">` : ""}
+                  <span class="hl-play">▶</span>
+                  ${dur ? `<span class="hl-badge">${dur}</span>` : ""}
+                </button>
+                <figcaption class="hl-cap"><span class="hl-title">${v.headline || ""}</span></figcaption>
               </figure>`;
             })
             .join("");
-          return `<section class="hl-match" data-open-match="${idx}">
-            <div class="hl-match-head">
+          return `<section class="hl-match">
+            <div class="hl-match-head" data-open-match="${idx}">
               <span class="hl-match-teams">${teamLogoHtml(m.homeEn, "sm")} ${m.homeSv} ${score} ${m.awaySv} ${teamLogoHtml(m.awayEn, "sm")}</span>
               <span class="hl-match-date">${formatDate(f.DateUtc)}</span>
             </div>
@@ -1152,6 +1291,47 @@ function koTeamHtml(name, side) {
     return `<span class="ko-team"><span class="ko-ph">${label}</span></span>`;
   }
   return `<span class="ko-team">${teamLogoHtml(name, "sm")}<span class="ko-tn">${name}</span></span>`;
+}
+
+function bestThirds() {
+  const tables = computeGroupTables();
+  const thirds = [];
+  for (const [grp, rows] of Object.entries(tables)) {
+    if (rows.length >= 3) thirds.push({ grp: grp.replace("Group ", ""), ...rows[2] });
+  }
+  thirds.sort(
+    (a, b) =>
+      b.pts - a.pts ||
+      b.gf - b.ga - (a.gf - a.ga) ||
+      b.gf - a.gf ||
+      a.sv.localeCompare(b.sv, "sv"),
+  );
+  return thirds;
+}
+
+function renderBestThirds() {
+  const thirds = bestThirds();
+  if (!thirds.length) return "";
+  const anyPlayed = thirds.some((t) => t.p > 0);
+  const rows = thirds
+    .map((t, i) => {
+      const adv = i < 8;
+      const gd = t.gf - t.ga;
+      return `<li class="bt-row ${adv ? "bt-in" : "bt-out"}">
+        <span class="bt-rank">${i + 1}</span>
+        <span class="bt-flag">${teamLogoHtml(t.name, "sm")}</span>
+        <span class="bt-name">${t.sv}<span class="bt-grp">grupp ${t.grp}</span></span>
+        <span class="bt-stat">${t.pts}p</span>
+        <span class="bt-stat bt-gd">${gd >= 0 ? "+" : ""}${gd}</span>
+        <span class="bt-tag">${adv ? "✓" : ""}</span>
+      </li>`;
+    })
+    .join("");
+  return `<section class="bt-wrap">
+    <div class="section-head"><h2>Bästa treor</h2><span class="section-sub">8 av 12 går vidare</span></div>
+    <ol class="bt-list">${rows}</ol>
+    <p class="bt-note">${anyPlayed ? "Preliminärt — uppdateras live efter varje match. ✓ = avancerar till slutspel." : "Rangordnas automatiskt från grupptabellerna när matcherna spelats."}</p>
+  </section>`;
 }
 
 function renderKnockout() {
@@ -1193,6 +1373,8 @@ function renderKnockout() {
     : "";
 
   document.getElementById("knockout").innerHTML = `
+    ${renderBestThirds()}
+    <div class="ko-bracket-head"><div class="section-head"><h2>Slutspelsträd</h2></div></div>
     <div class="ko-chips">${chips}</div>
     <h3 class="ko-round-title">${meta?.label || ""}</h3>
     ${banner}
@@ -1317,6 +1499,15 @@ document.addEventListener("click", (e) => {
   const koChip = e.target.closest("[data-ko-round]");
   if (koChip) { state.koRound = Number(koChip.dataset.koRound); renderKnockout(); return; }
 
+  const thumb = e.target.closest(".hl-thumb");
+  if (thumb) {
+    const src = thumb.dataset.video;
+    const poster = thumb.dataset.poster || "";
+    const fig = thumb.closest(".hl");
+    fig.querySelector(".hl-thumb").outerHTML = `<video class="hl-video" src="${src}" poster="${poster}" controls autoplay playsinline></video>`;
+    return;
+  }
+
   const filterBtn = e.target.closest(".filter");
   if (filterBtn) {
     document.querySelectorAll(".filter").forEach((b) => b.classList.remove("active"));
@@ -1363,21 +1554,28 @@ function fmtOdds(dec) {
 }
 
 async function getEventId(homeEn, awayEn, dateUtc) {
-  const key = `${homeEn}|${awayEn}`;
+  const key = pairKey(homeEn, awayEn);
   if (eventIdCache.has(key)) return eventIdCache.get(key);
   if (!dateUtc) return null;
-  const ymd = dateUtc.slice(0, 10).replace(/-/g, "");
+  // ESPN buckets by US timezone — query the UTC date and its neighbours.
+  const base = new Date(dateUtc.slice(0, 10) + "T12:00:00Z");
+  const ymds = [-1, 0, 1].map((off) => {
+    const d = new Date(base);
+    d.setUTCDate(d.getUTCDate() + off);
+    return d.toISOString().slice(0, 10).replace(/-/g, "");
+  });
   try {
-    const r = await fetch(`${ESPN_SCOREBOARD}?dates=${ymd}`, { cache: "no-store" });
-    const j = await r.json();
-    for (const e of j.events || []) {
-      const c = e.competitions?.[0];
-      const h = c?.competitors?.find((x) => x.homeAway === "home");
-      const a = c?.competitors?.find((x) => x.homeAway === "away");
-      if (!h || !a) continue;
-      const hn = espnTeamName(h.team.displayName);
-      const an = espnTeamName(a.team.displayName);
-      eventIdCache.set(`${hn}|${an}`, e.id);
+    for (const ymd of ymds) {
+      const r = await fetch(`${ESPN_SCOREBOARD}?dates=${ymd}`, { cache: "no-store" });
+      const j = await r.json();
+      for (const e of j.events || []) {
+        const c = e.competitions?.[0];
+        const h = c?.competitors?.find((x) => x.homeAway === "home");
+        const a = c?.competitors?.find((x) => x.homeAway === "away");
+        if (!h || !a) continue;
+        eventIdCache.set(normTeam(h.team.displayName) + "|" + normTeam(a.team.displayName), e.id);
+      }
+      if (eventIdCache.has(key)) return eventIdCache.get(key);
     }
     return eventIdCache.get(key) || null;
   } catch (err) {
@@ -1535,6 +1733,83 @@ function detailOurPicksHtml(m, outcome) {
   </section>`;
 }
 
+function detailConsensusHtml(m, outcome) {
+  const counts = { "1": 0, X: 0, "2": 0 };
+  let n = 0;
+  for (const p of state.picks.players) {
+    const pick = m.picks[p];
+    if (pick) { counts[pick] = (counts[pick] || 0) + 1; n++; }
+  }
+  if (!n) return "";
+  const top = ["1", "X", "2"].sort((a, b) => counts[b] - counts[a])[0];
+  const label = top === "1" ? m.homeSv + " vinner" : top === "2" ? m.awaySv + " vinner" : "Oavgjort";
+  let line = `Gruppens konsensus: <strong>${label}</strong> (${counts[top]}/${n}).`;
+  if (outcome != null) {
+    const right = counts[outcome] || 0;
+    line += ` Resultatet gav <strong>${right}</strong> ${right === 1 ? "person" : "personer"} rätt.`;
+    if (counts[outcome] === 0) line += " Ingen prickade rätt — skrällkväll. 😮";
+    else if (counts[outcome] === n) line += " Alla rätt! 🎯";
+  }
+  return `<section class="detail-section"><h3>Tipsläget</h3><p class="ctx-line">${line}</p></section>`;
+}
+
+function detailContextHtml(m) {
+  const f = findFixture(m.homeEn, m.awayEn);
+  const grp = f?.Group;
+  if (!grp) return "";
+  const rows = computeGroupTables()[grp];
+  if (!rows) return "";
+  const rowOf = (en) => rows.find((r) => r.name === en) || rows.find((r) => normTeam(r.name) === normTeam(en));
+  const hr = rowOf(m.homeEn);
+  const ar = rowOf(m.awayEn);
+  if (!hr || !ar) return "";
+  const posOf = (r) => rows.indexOf(r) + 1;
+  const cell = (sv, r) =>
+    `<div class="ctx-team"><span class="ctx-pos">${posOf(r)}:a</span><span class="ctx-name">${sv}</span><span class="ctx-pts">${r.pts}p</span><span class="ctx-sub">${r.w}-${r.d}-${r.l} · ${r.gf}-${r.ga}</span></div>`;
+  return `<section class="detail-section">
+    <h3>Gruppläge · ${grp}</h3>
+    <div class="ctx-grid">
+      ${cell(m.homeSv, hr)}
+      ${cell(m.awaySv, ar)}
+    </div>
+  </section>`;
+}
+
+function detailPreviewHtml(summary, m, oddsObj) {
+  // A generated, data-driven preview that always has something to say.
+  const p = impliedProbs(oddsObj);
+  const bits = [];
+  if (p) {
+    const arr = [
+      { k: m.homeSv, v: p.home },
+      { k: "oavgjort", v: p.draw },
+      { k: m.awaySv, v: p.away },
+    ].sort((a, b) => b.v - a.v);
+    const fav = arr[0];
+    const pc = Math.round(fav.v * 100);
+    if (fav.k === "oavgjort") bits.push(`Marknaden ser en jämn match — mest troliga utfall är oavgjort (${pc}%).`);
+    else bits.push(`Marknaden gör <strong>${fav.k}</strong> till favorit med ${pc}% sannolikhet.`);
+  }
+  const sets = summary?.lastFiveGames;
+  if (Array.isArray(sets)) {
+    for (const s of sets) {
+      const ev = (s.events || []).slice(-5);
+      const w = ev.filter((e) => e.gameResult === "W").length;
+      const l = ev.filter((e) => e.gameResult === "L").length;
+      const name = s.team?.displayName || "";
+      const sv = name === toEspnName(m.homeEn) ? m.homeSv : name === toEspnName(m.awayEn) ? m.awaySv : name;
+      if (ev.length) {
+        const trend = w >= 4 ? "glödhet form" : w >= 3 ? "fin form" : l >= 3 ? "svajig form" : "blandad form";
+        bits.push(`${sv}: ${w}V-${ev.length - w - l}O-${l}F senaste ${ev.length} (${trend}).`);
+      }
+    }
+  }
+  const h2h = summary?.headToHeadGames?.events;
+  if (h2h?.length) bits.push(`Lagen har mötts ${h2h.length} ggr tidigare (se H2H nedan).`);
+  if (!bits.length) return "";
+  return `<section class="detail-section"><h3>Förhandsanalys</h3><p class="ctx-line">${bits.join(" ")}</p></section>`;
+}
+
 async function openDetail(idx) {
   const m = state.picks.groupStage[idx];
   if (!m) return;
@@ -1552,6 +1827,12 @@ async function openDetail(idx) {
   } else {
     scoreLine = f?.DateUtc ? `<span class="detail-when">${formatDate(f.DateUtc)}</span>` : "";
   }
+  // Sections built purely from our own data — always present, instantly.
+  const baseSections = `
+    ${detailOurPicksHtml(m, outcome)}
+    ${detailConsensusHtml(m, outcome)}
+    ${detailContextHtml(m)}
+  `;
   body.innerHTML = `
     <header class="detail-header">
       <div class="detail-hero">
@@ -1566,33 +1847,39 @@ async function openDetail(idx) {
         </div>
       </div>
     </header>
-    ${detailOurPicksHtml(m, outcome)}
+    ${baseSections}
     <div id="detail-extra"><div class="skel skel-line"></div><div class="skel skel-line"></div></div>
   `;
   document.documentElement.classList.add("modal-open");
   dlg.showModal();
 
+  const extra = () => document.getElementById("detail-extra");
   try {
     const eid = await getEventId(m.homeEn, m.awayEn, f?.DateUtc);
     if (!eid) {
-      document.getElementById("detail-extra").innerHTML = `<p class="detail-empty">Inga detaljer från ESPN än — kommer närmare matchstart.</p>${detailVenueHtml({ gameInfo: { venue: f?.Location ? { fullName: f.Location } : null } })}`;
+      extra().innerHTML = `${detailVenueHtml({ gameInfo: { venue: f?.Location ? { fullName: f.Location } : null } })}
+        <p class="detail-empty">Live-statistik och höjdpunkter dyker upp närmare matchstart.</p>`;
       return;
     }
     const summary = await getSummary(eid);
     const oddsObj = summary.pickcenter?.[0] || summary.odds?.[0];
-    document.getElementById("detail-extra").innerHTML = `
-      ${detailOddsHtml(oddsObj)}
-      ${detailProbabilityHtml(oddsObj, m)}
-      ${detailFormHtml(summary)}
-      ${detailHighlightsHtml(summary)}
-      ${collapsible("Analys", detailArticleHtml(summary))}
-      ${collapsible("Head-to-head", detailH2HHtml(summary))}
-      ${collapsible("Händelser", detailEventsHtml(summary))}
-      ${collapsible("Nyheter", detailNewsHtml(summary, m))}
-      ${detailVenueHtml(summary)}
-    `;
+    const played = outcome != null;
+    const sections = [
+      detailOddsHtml(oddsObj),
+      detailProbabilityHtml(oddsObj, m),
+      played ? "" : detailPreviewHtml(summary, m, oddsObj),
+      detailFormHtml(summary),
+      detailHighlightsHtml(summary),
+      collapsible("Analys", detailArticleHtml(summary)),
+      collapsible("Head-to-head", detailH2HHtml(summary)),
+      collapsible("Händelser", detailEventsHtml(summary)),
+      collapsible("Nyheter", detailNewsHtml(summary, m)),
+      detailVenueHtml(summary) || detailVenueHtml({ gameInfo: { venue: f?.Location ? { fullName: f.Location } : null } }),
+    ].filter(Boolean);
+    extra().innerHTML = sections.join("\n");
   } catch (err) {
-    document.getElementById("detail-extra").innerHTML = `<p class="detail-empty">Kunde inte hämta detaljer (${err.message}).</p>`;
+    extra().innerHTML = `${detailVenueHtml({ gameInfo: { venue: f?.Location ? { fullName: f.Location } : null } })}
+      <p class="detail-empty">Kunde inte hämta extra statistik just nu.</p>`;
   }
 }
 

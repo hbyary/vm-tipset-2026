@@ -1,4 +1,4 @@
-const CACHE = "vm-tipset-2026-v17";
+const CACHE = "vm-tipset-2026-v18";
 const ASSETS = [
   "./",
   "index.html",
