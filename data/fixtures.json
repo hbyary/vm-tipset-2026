@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-26T04:07:45Z",
+  "fetchedAt": "2026-06-26T08:08:21Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -706,9 +706,9 @@
       "HomeTeam": "Türkiye",
       "AwayTeam": "USA",
       "Group": "Group D",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 3,
+      "AwayTeamScore": 2,
+      "Winner": "Türkiye"
     },
     {
       "MatchNumber": 60,
@@ -718,9 +718,9 @@
       "HomeTeam": "Paraguay",
       "AwayTeam": "Australia",
       "Group": "Group D",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 0,
+      "AwayTeamScore": 0,
+      "Winner": "Draw"
     },
     {
       "MatchNumber": 61,
