@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-25T23:53:43Z",
+  "fetchedAt": "2026-06-26T04:07:45Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -682,9 +682,9 @@
       "HomeTeam": "Japan",
       "AwayTeam": "Sweden",
       "Group": "Group F",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 1,
+      "AwayTeamScore": 1,
+      "Winner": "Draw"
     },
     {
       "MatchNumber": 58,
@@ -694,9 +694,9 @@
       "HomeTeam": "Tunisia",
       "AwayTeam": "Netherlands",
       "Group": "Group F",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 1,
+      "AwayTeamScore": 3,
+      "Winner": "Netherlands"
     },
     {
       "MatchNumber": 59,
