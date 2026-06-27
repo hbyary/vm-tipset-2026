@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-27T05:32:59Z",
+  "fetchedAt": "2026-06-27T08:42:15Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -778,9 +778,9 @@
       "HomeTeam": "Egypt",
       "AwayTeam": "IR Iran",
       "Group": "Group G",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 1,
+      "AwayTeamScore": 1,
+      "Winner": "Draw"
     },
     {
       "MatchNumber": 64,
@@ -790,9 +790,9 @@
       "HomeTeam": "New Zealand",
       "AwayTeam": "Belgium",
       "Group": "Group G",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 1,
+      "AwayTeamScore": 5,
+      "Winner": "Belgium"
     },
     {
       "MatchNumber": 67,
@@ -896,7 +896,7 @@
       "DateUtc": "2026-06-29 20:30:00Z",
       "Location": "Boston Stadium",
       "HomeTeam": "Germany",
-      "AwayTeam": "3ABCDF",
+      "AwayTeam": "Paraguay",
       "Group": null,
       "HomeTeamScore": null,
       "AwayTeamScore": null,
@@ -920,7 +920,7 @@
       "DateUtc": "2026-06-30 17:00:00Z",
       "Location": "Dallas Stadium",
       "HomeTeam": "Côte d'Ivoire",
-      "AwayTeam": "2I",
+      "AwayTeam": "Norway",
       "Group": null,
       "HomeTeamScore": null,
       "AwayTeamScore": null,
@@ -931,8 +931,8 @@
       "RoundNumber": 4,
       "DateUtc": "2026-06-30 21:00:00Z",
       "Location": "New York/New Jersey Stadium",
-      "HomeTeam": "1I",
-      "AwayTeam": "3CDFGH",
+      "HomeTeam": "France",
+      "AwayTeam": "Sweden",
       "Group": null,
       "HomeTeamScore": null,
       "AwayTeamScore": null,
@@ -967,7 +967,7 @@
       "RoundNumber": 4,
       "DateUtc": "2026-07-01 20:00:00Z",
       "Location": "Seattle Stadium",
-      "HomeTeam": "1G",
+      "HomeTeam": "Belgium",
       "AwayTeam": "3AEHIJ",
       "Group": null,
       "HomeTeamScore": null,
@@ -991,7 +991,7 @@
       "RoundNumber": 4,
       "DateUtc": "2026-07-02 19:00:00Z",
       "Location": "Los Angeles Stadium",
-      "HomeTeam": "1H",
+      "HomeTeam": "Spain",
       "AwayTeam": "2J",
       "Group": null,
       "HomeTeamScore": null,
@@ -1028,7 +1028,7 @@
       "DateUtc": "2026-07-03 18:00:00Z",
       "Location": "Dallas Stadium",
       "HomeTeam": "Australia",
-      "AwayTeam": "2G",
+      "AwayTeam": "Egypt",
       "Group": null,
       "HomeTeamScore": null,
       "AwayTeamScore": null,
@@ -1040,7 +1040,7 @@
       "DateUtc": "2026-07-03 22:00:00Z",
       "Location": "Miami Stadium",
       "HomeTeam": "Argentina",
-      "AwayTeam": "2H",
+      "AwayTeam": "Cabo Verde",
       "Group": null,
       "HomeTeamScore": null,
       "AwayTeamScore": null,
