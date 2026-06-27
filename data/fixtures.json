@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-27T01:28:56Z",
+  "fetchedAt": "2026-06-27T05:32:59Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -754,9 +754,9 @@
       "HomeTeam": "Cabo Verde",
       "AwayTeam": "Saudi Arabia",
       "Group": "Group H",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 0,
+      "AwayTeamScore": 0,
+      "Winner": "Draw"
     },
     {
       "MatchNumber": 66,
@@ -766,9 +766,9 @@
       "HomeTeam": "Uruguay",
       "AwayTeam": "Spain",
       "Group": "Group H",
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 0,
+      "AwayTeamScore": 1,
+      "Winner": "Spain"
     },
     {
       "MatchNumber": 63,
