@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-29T17:42:00Z",
+  "fetchedAt": "2026-06-29T20:04:58Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -886,9 +886,9 @@
       "HomeTeam": "Brazil",
       "AwayTeam": "Japan",
       "Group": null,
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 2,
+      "AwayTeamScore": 1,
+      "Winner": "Brazil"
     },
     {
       "MatchNumber": 74,
@@ -1087,7 +1087,7 @@
       "RoundNumber": 5,
       "DateUtc": "2026-07-05 20:00:00Z",
       "Location": "New York/New Jersey Stadium",
-      "HomeTeam": "To be announced",
+      "HomeTeam": "Brazil",
       "AwayTeam": "To be announced",
       "Group": null,
       "HomeTeamScore": null,
