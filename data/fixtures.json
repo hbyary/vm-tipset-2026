@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-30T19:20:18Z",
+  "fetchedAt": "2026-06-30T21:15:28Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -922,9 +922,9 @@
       "HomeTeam": "Côte d'Ivoire",
       "AwayTeam": "Norway",
       "Group": null,
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 1,
+      "AwayTeamScore": 2,
+      "Winner": "Norway"
     },
     {
       "MatchNumber": 77,
@@ -1088,7 +1088,7 @@
       "DateUtc": "2026-07-05 20:00:00Z",
       "Location": "New York/New Jersey Stadium",
       "HomeTeam": "Brazil",
-      "AwayTeam": "To be announced",
+      "AwayTeam": "Norway",
       "Group": null,
       "HomeTeamScore": null,
       "AwayTeamScore": null,
