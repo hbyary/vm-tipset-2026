@@ -1527,6 +1527,135 @@ tr.is-sweden td { font-weight: 700; }
 .grp-score.pending { background: transparent; color: var(--muted); font-weight: 400; }
 .grp-score.live { background: #ef4444; color: white; }
 
+/* Title race (Hem) */
+.tr-card {
+  background: linear-gradient(180deg, rgba(250,204,21,0.06), rgba(255,255,255,0.02));
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: var(--shadow-md);
+}
+.tr-card.tr-decided { background: linear-gradient(180deg, rgba(52,211,153,0.12), rgba(255,255,255,0.02)); border-color: rgba(52,211,153,0.4); }
+.tr-lines { display: flex; flex-direction: column; gap: 8px; }
+.tr-card .insight.tr-win .insight-txt { font-size: 15px; }
+.tr-card .insight.tr-flip { background: rgba(250,204,21,0.08); border-radius: 10px; }
+.tr-card .insight.tr-watch { background: rgba(96,165,250,0.08); border-radius: 10px; }
+.tr-standings {
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tr-stand {
+  display: grid;
+  grid-template-columns: 18px 1fr auto auto auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 2px;
+  font-size: 13px;
+}
+.tr-pos { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
+.tr-nm { font-weight: 700; }
+.tr-wc { color: var(--muted); font-size: 11px; }
+.tr-pt { font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+.tr-tb { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; min-width: 30px; text-align: right; }
+.tr-foot { font-size: 10.5px; color: var(--muted); margin: 10px 2px 0; line-height: 1.4; text-align: center; }
+
+/* History collapse on Hem */
+.hist-wrap { padding-top: 0; }
+.hist-summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 2px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  color: var(--text-soft);
+}
+.hist-summary::-webkit-details-marker { display: none; }
+.hist-wrap .col-chevron { color: var(--accent); transition: transform 0.2s ease; }
+.hist-wrap[open] .col-chevron { transform: rotate(180deg); }
+
+/* Detail round tag + extra-time/pens */
+.detail-round-tag {
+  text-align: center;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.ko-extra { font-size: 11px; color: var(--muted); font-weight: 600; }
+
+/* Bracket */
+.bracket-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -16px;
+  padding: 0 16px 8px;
+  scrollbar-width: none;
+}
+.bracket-scroll::-webkit-scrollbar { display: none; }
+.bracket {
+  display: flex;
+  gap: 14px;
+  align-items: stretch;
+  min-width: min-content;
+}
+.br-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 8px;
+  flex: 0 0 auto;
+  width: 150px;
+}
+.br-head {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 2px;
+  position: sticky;
+  top: 0;
+}
+.br-matches { display: flex; flex-direction: column; justify-content: space-around; gap: 8px; flex: 1; }
+.br-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+.br-card.live { border-color: rgba(239,68,68,0.5); }
+.br-card:active { border-color: var(--border-strong); }
+.br-row {
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  font-size: 12px;
+}
+.br-row + .br-row { border-top: 1px solid var(--border); }
+.br-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.br-score { font-weight: 800; font-variant-numeric: tabular-nums; }
+.br-win .br-name { color: var(--text); }
+.br-win .br-score { color: var(--win); }
+.br-lose { opacity: 0.5; }
+.br-ph-dot { width: 18px; height: 18px; border-radius: 50%; background: rgba(255,255,255,0.06); }
+.br-pens { font-size: 9px; color: var(--muted); text-align: center; padding-top: 3px; text-transform: uppercase; letter-spacing: 0.3px; }
+.br-livetag { color: #fca5a5; display: flex; align-items: center; justify-content: center; gap: 4px; }
+
 /* Best thirds */
 .bt-wrap { margin-bottom: 22px; }
 .bt-list {

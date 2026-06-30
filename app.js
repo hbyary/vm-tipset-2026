@@ -91,6 +91,7 @@ async function load() {
   state.lastChecked = Date.now();
   render();
   backfillResults();
+  loadKnockoutResults();
 }
 
 async function refresh() {
@@ -116,9 +117,19 @@ async function espnResultsForDate(ymd) {
       const h = c?.competitors?.find((x) => x.homeAway === "home");
       const a = c?.competitors?.find((x) => x.homeAway === "away");
       if (!h || !a) continue;
+      const detail = e.status?.type?.detail || "";
+      const penH = h.shootoutScore != null ? Number(h.shootoutScore) : null;
+      const penA = a.shootoutScore != null ? Number(a.shootoutScore) : null;
+      const hasPens = penH != null && penA != null && (penH > 0 || penA > 0);
       map[normTeam(h.team.displayName) + "|" + normTeam(a.team.displayName)] = {
         hs: Number(h.score),
         as: Number(a.score),
+        penH,
+        penA,
+        isPens: hasPens || /pen/i.test(detail),
+        isAet: /aet|extra|et\b/i.test(detail) && !/pen/i.test(detail),
+        winnerHome: h.winner === true,
+        winnerAway: a.winner === true,
       };
     }
   } catch (e) {
@@ -165,6 +176,215 @@ async function backfillResults() {
     }
   }
   if (patched) render();
+}
+
+// Knockout results (incl. extra time + penalties) keyed by team pair.
+const koResultStore = {}; // pairKey -> full ESPN record
+async function loadKnockoutResults() {
+  const list = (state.fixtures?.matches || []).filter(
+    (m) => m.RoundNumber >= 4 && isRealTeam(m.HomeTeam) && isRealTeam(m.AwayTeam) && m.DateUtc,
+  );
+  if (!list.length) return;
+  const dates = new Set();
+  for (const m of list) {
+    const base = new Date(m.DateUtc.slice(0, 10) + "T12:00:00Z");
+    for (const off of [-1, 0, 1]) {
+      const d = new Date(base);
+      d.setUTCDate(d.getUTCDate() + off);
+      dates.add(d.toISOString().slice(0, 10).replace(/-/g, ""));
+    }
+  }
+  const merged = {};
+  for (const ymd of dates) Object.assign(merged, await espnResultsForDate(ymd));
+  let changed = false;
+  for (const m of list) {
+    const key = normTeam(toEspnName(m.HomeTeam)) + "|" + normTeam(toEspnName(m.AwayTeam));
+    if (merged[key]) {
+      koResultStore[key] = merged[key];
+      changed = true;
+    }
+  }
+  if (changed && (state.tab === "knockout" || state.tab === "home")) render();
+}
+
+function isRealTeam(name) {
+  return !!name && !/to be announced/i.test(name) && !/^\d/.test(name) && !/^W\d/.test(name);
+}
+function koInfo(homeEn, awayEn) {
+  return koResultStore[normTeam(toEspnName(homeEn)) + "|" + normTeam(toEspnName(awayEn))] || null;
+}
+
+// --- Knockout progression / Title race -------------------------------------
+function koLoserOf(m) {
+  if (!isRealTeam(m.HomeTeam) || !isRealTeam(m.AwayTeam)) return null;
+  const info = koInfo(m.HomeTeam, m.AwayTeam);
+  if (info) {
+    if (info.winnerHome) return m.AwayTeam;
+    if (info.winnerAway) return m.HomeTeam;
+    if (info.hs !== info.as) return info.hs > info.as ? m.AwayTeam : m.HomeTeam;
+    if (info.penH != null && info.penA != null && info.penH !== info.penA)
+      return info.penH > info.penA ? m.AwayTeam : m.HomeTeam;
+  }
+  if (m.HomeTeamScore != null && m.AwayTeamScore != null && m.HomeTeamScore !== m.AwayTeamScore)
+    return m.HomeTeamScore > m.AwayTeamScore ? m.AwayTeam : m.HomeTeam;
+  // draw with no shootout data → infer loser from who appears in the next round
+  const next = new Set(
+    (state.fixtures?.matches || [])
+      .filter((x) => x.RoundNumber === m.RoundNumber + 1)
+      .flatMap((x) => [x.HomeTeam, x.AwayTeam])
+      .filter(isRealTeam)
+      .map((t) => normTeam(toEspnName(t))),
+  );
+  if (next.size) {
+    const hIn = next.has(normTeam(toEspnName(m.HomeTeam)));
+    const aIn = next.has(normTeam(toEspnName(m.AwayTeam)));
+    if (hIn && !aIn) return m.AwayTeam;
+    if (aIn && !hIn) return m.HomeTeam;
+  }
+  return null; // undecided
+}
+
+function knockoutState() {
+  const ms = (state.fixtures?.matches || []).filter((m) => m.RoundNumber >= 4);
+  const r32 = ms.filter((m) => m.RoundNumber === 4);
+  const allTeams = new Set(r32.flatMap((m) => [m.HomeTeam, m.AwayTeam]).filter(isRealTeam).map((t) => normTeam(toEspnName(t))));
+  const eliminated = new Set();
+  for (const m of ms) {
+    const loser = koLoserOf(m);
+    if (loser) eliminated.add(normTeam(toEspnName(loser)));
+  }
+  // final = latest-dated round-8 match
+  const finals = ms.filter((m) => m.RoundNumber === 8 && m.DateUtc).sort((a, b) => new Date(b.DateUtc) - new Date(a.DateUtc));
+  const finalMatch = finals[0] || null;
+  let champion = null; // normalized english
+  if (finalMatch) {
+    const loser = koLoserOf(finalMatch);
+    if (loser && isRealTeam(finalMatch.HomeTeam) && isRealTeam(finalMatch.AwayTeam)) {
+      const ln = normTeam(toEspnName(loser));
+      champion = [finalMatch.HomeTeam, finalMatch.AwayTeam].map((t) => normTeam(toEspnName(t))).find((t) => t !== ln) || null;
+    }
+  }
+  const alive = [...allTeams].filter((t) => !eliminated.has(t));
+  return { alive, eliminated, champion, finalMatch };
+}
+
+function titleRace() {
+  const players = state.picks.players;
+  const ks = knockoutState();
+  // current group points (no winner bonus)
+  const base = {};
+  for (const p of players) base[p] = 0;
+  for (const m of state.picks.groupStage) {
+    const { home, away } = resolvedScores(m);
+    const o = outcomeFromScores(home, away);
+    if (o == null) continue;
+    for (const p of players) if (m.picks[p] === o) base[p]++;
+  }
+  // tiebreaker distance (lower = better) from Sweden GF/GA
+  let sgf = 0, sga = 0;
+  for (const m of state.picks.groupStage) {
+    if (m.homeEn !== "Sweden" && m.awayEn !== "Sweden") continue;
+    const { home, away } = resolvedScores(m);
+    if (home == null) continue;
+    const isHome = m.homeEn === "Sweden";
+    sgf += isHome ? home : away;
+    sga += isHome ? away : home;
+  }
+  const gg = state.picks.goalGuesses || {};
+  const dist = {};
+  for (const p of players) dist[p] = gg[p] ? Math.abs(gg[p].for - sgf) + Math.abs(gg[p].against - sga) : Infinity;
+
+  // map each player's WC winner pick to a normalized english team
+  const pickEn = {};
+  for (const p of players) {
+    const sv = state.picks.winnerPicks[p] || "";
+    pickEn[p] = sv ? normTeam(toEspnName(state.picks.mapping[sv] || sv)) : null;
+  }
+
+  const champ = (finalPts) =>
+    players
+      .slice()
+      .sort((a, b) => finalPts[b] - finalPts[a] || dist[a] - dist[b] || a.localeCompare(b, "sv"))[0];
+
+  // possible WC winners still in play (or the decided champion)
+  const possibleWinners = ks.champion ? [ks.champion] : ks.alive;
+  const outcomeByTeam = {}; // team -> pool champion
+  for (const t of possibleWinners) {
+    const fp = {};
+    for (const p of players) fp[p] = base[p] + (pickEn[p] === t ? 2 : 0);
+    outcomeByTeam[t] = champ(fp);
+  }
+  const distinctChamps = [...new Set(Object.values(outcomeByTeam))];
+
+  const ranked = players.map((p) => ({ p, pts: base[p], dist: dist[p], pickSv: state.picks.winnerPicks[p] || "", pickEn: pickEn[p] }))
+    .sort((a, b) => b.pts - a.pts || a.dist - b.dist);
+
+  return { base, dist, pickEn, ranked, ks, sgf, sga, possibleWinners, outcomeByTeam, distinctChamps, champ };
+}
+
+function renderTitleRace() {
+  const el = document.getElementById("titlerace");
+  if (!el) return;
+  const tr = titleRace();
+  const leader = tr.ranked[0];
+  const second = tr.ranked[1];
+  const decided = tr.distinctChamps.length === 1;
+  const lines = [];
+
+  // mini standings (top 4)
+  const standings = tr.ranked
+    .slice(0, 4)
+    .map((r, i) => `<div class="tr-stand"><span class="tr-pos">${i + 1}</span><span class="tr-nm">${r.p}</span><span class="tr-wc">${r.pickSv || "–"}</span><span class="tr-pt">${r.pts}p</span><span class="tr-tb">±${r.dist === Infinity ? "–" : r.dist}</span></div>`)
+    .join("");
+
+  if (decided) {
+    const champ = tr.distinctChamps[0];
+    lines.push({ icon: "🏆", cls: "tr-win", t: `<strong>${champ} vinner tipset!</strong> Matematiskt avgjort — ingen kan längre gå om.` });
+  } else {
+    const defaultChamp = tr.champ(tr.base);
+    lines.push({ icon: "🥇", t: `<strong>${leader.p}</strong> leder med ${leader.pts} p (särskiljare ±${leader.dist}). Vinner ingen av jagarnas VM-lag står ${leader.p} som segrare.` });
+
+    // who can still flip it, and how
+    for (const r of tr.ranked) {
+      if (r.p === leader.p) continue;
+      if (!r.pickEn) continue;
+      const alive = tr.possibleWinners.includes(r.pickEn);
+      const championIfPickWins = tr.outcomeByTeam[r.pickEn];
+      const canTie = r.pts + 2 >= leader.pts;
+      if (championIfPickWins === r.p) {
+        lines.push({
+          icon: "🎯",
+          cls: "tr-flip",
+          t: `<strong>${r.p} vinner OM ${r.pickSv} vinner VM</strong> → ${r.pts}+2 = ${r.pts + 2} p och tar särskiljaren (±${r.dist} mot ±${leader.dist}).${alive ? "" : ` Men ${r.pickSv} är redan utslaget — borta.`}`,
+        });
+      } else if (canTie && alive) {
+        // close enough to tie but loses tiebreaker / still short
+        const wouldBe = r.pts + 2;
+        const reason = wouldBe < leader.pts
+          ? `når bara ${wouldBe} p`
+          : `når ${wouldBe} p men förlorar särskiljaren mot ${leader.p} (±${r.dist} mot ±${leader.dist})`;
+        lines.push({ icon: "🚫", t: `<strong>${r.p} kan inte vinna</strong>: även om ${r.pickSv} vinner VM ${reason}.` });
+      }
+    }
+
+    // pivot watch
+    const flipTeams = tr.possibleWinners.filter((t) => tr.outcomeByTeam[t] !== defaultChamp);
+    if (flipTeams.length) {
+      const flipNames = [...new Set(flipTeams.map((t) => {
+        const r = tr.ranked.find((x) => x.pickEn === t);
+        return r ? r.pickSv : t;
+      }))];
+      lines.push({ icon: "👀", cls: "tr-watch", t: `Att hålla koll på: <strong>${flipNames.join(", ")}</strong>. Åker ${flipNames.length === 1 ? "laget" : "alla dessa"} ut ur VM är ${defaultChamp} klar mästare.` });
+    }
+  }
+
+  el.innerHTML = `
+    <div class="section-head"><h2>Titelstriden</h2><span class="section-sub">${decided ? "Avgjort" : "Slutspel pågår"}</span></div>
+    <div class="tr-card ${decided ? "tr-decided" : ""}">
+      <div class="tr-lines">${lines.map((l) => `<div class="insight ${l.cls || ""}"><span class="insight-ico">${l.icon}</span><span class="insight-txt">${l.t}</span></div>`).join("")}</div>
+      <div class="tr-standings">${standings}</div>
+      <p class="tr-foot">+2 bonus för rätt VM-vinnare · särskiljare = närmast Sveriges mål (${tr.sgf}–${tr.sga}), lägst ± vinner</p>
+    </div>`;
 }
 
 function liveWindowActive() {
@@ -424,13 +644,16 @@ function renderMatches() {
   };
 
   let html = renderList(current);
-  if (older.length) {
+  if (older.length && current.length) {
     // newest-first inside the collapsed history
     const olderHtml = renderList([...older].reverse());
     html += `<details class="older-wrap"${state.filter === "played" ? " open" : ""}>
       <summary><span class="col-title">Tidigare matcher</span><span class="older-count">${older.length}</span><span class="col-chevron">▾</span></summary>
       <div class="older-body">${olderHtml}</div>
     </details>`;
+  } else if (older.length) {
+    // no current matches (group stage over) → render history flat, newest first
+    html += renderList([...older].reverse());
   }
 
   $("#matches").innerHTML = html || `<p class="empty-state">Inga matcher i denna vy.</p>`;
@@ -1608,51 +1831,69 @@ function renderBestThirds() {
   </section>`;
 }
 
+function koSlotShort(slot) {
+  if (!slot) return "TBD";
+  if (/to be announced/i.test(slot)) return "TBD";
+  if (/^1[A-L]$/.test(slot)) return "1:a " + slot[1];
+  if (/^2[A-L]$/.test(slot)) return "2:a " + slot[1];
+  if (/^3/.test(slot)) return "3:a";
+  if (/^W\d/.test(slot)) return "Vinnare";
+  return slot;
+}
+
+function koBracketCard(m) {
+  const home = isRealTeam(m.HomeTeam), away = isRealTeam(m.AwayTeam);
+  const info = koInfo(m.HomeTeam, m.AwayTeam);
+  const live = findLive(m.HomeTeam, m.AwayTeam);
+  const isLive = live?.state === "in";
+  let hs = m.HomeTeamScore, as = m.AwayTeamScore;
+  if (info) { hs = info.hs; as = info.as; }
+  if (isLive) { hs = Number(live.homeScore); as = Number(live.awayScore); }
+  const loser = koLoserOf(m);
+  const loserN = loser ? normTeam(toEspnName(loser)) : null;
+  const decided = !!loserN;
+  const teamRow = (t, score) => {
+    const real = isRealTeam(t);
+    const isLoser = real && loserN === normTeam(toEspnName(t));
+    const isWin = real && decided && !isLoser;
+    const nm = real ? svName(t) : koSlotShort(t);
+    return `<div class="br-row ${isLoser ? "br-lose" : ""} ${isWin ? "br-win" : ""}">
+      ${real ? teamLogoHtml(t, "sm") : '<span class="br-ph-dot"></span>'}
+      <span class="br-name">${nm}</span>
+      <span class="br-score">${score != null && (decided || isLive) ? score : ""}</span>
+    </div>`;
+  };
+  const pens = info?.isPens && info.penH != null ? `<div class="br-pens">straffar ${info.penH}–${info.penA}</div>` : info?.isAet ? `<div class="br-pens">efter förläng.</div>` : "";
+  const liveBadge = isLive ? `<div class="br-pens br-livetag"><span class="live-dot"></span>${live.clock || "live"}</div>` : "";
+  return `<article class="br-card ${isLive ? "live" : ""}" ${home && away ? `data-ko="${m.MatchNumber}"` : ""}>
+    ${teamRow(m.HomeTeam, hs)}
+    ${teamRow(m.AwayTeam, as)}
+    ${liveBadge || pens}
+  </article>`;
+}
+
 function renderKnockout() {
   const list = state.fixtures?.matches || [];
-  state.koRound = state.koRound || 4;
-
-  const chips = KO_ROUNDS.map(
-    (r) => `<button class="ko-chip ${state.koRound === r.round ? "active" : ""}" data-ko-round="${r.round}">${r.short}</button>`,
-  ).join("");
-
-  const meta = KO_ROUNDS.find((r) => r.round === state.koRound);
-  const games = list
-    .filter((m) => m.RoundNumber === state.koRound)
-    .sort((a, b) => new Date(a.DateUtc) - new Date(b.DateUtc));
-
-  const cards = games
-    .map((g) => {
-      const played = g.HomeTeamScore != null && g.AwayTeamScore != null;
-      const hWin = played && g.HomeTeamScore > g.AwayTeamScore;
-      const aWin = played && g.AwayTeamScore > g.HomeTeamScore;
-      const dateStr = g.DateUtc ? formatDate(g.DateUtc) : "Datum TBD";
-      return `<article class="ko-match">
-        <div class="ko-row ${hWin ? "win" : ""}">
-          ${koTeamHtml(g.HomeTeam)}
-          <span class="ko-num">${played ? g.HomeTeamScore : ""}</span>
-        </div>
-        <div class="ko-row ${aWin ? "win" : ""}">
-          ${koTeamHtml(g.AwayTeam)}
-          <span class="ko-num">${played ? g.AwayTeamScore : ""}</span>
-        </div>
-        <div class="ko-foot">${dateStr}${g.Location ? " · " + g.Location : ""}</div>
-      </article>`;
+  const rounds = [
+    { r: 4, label: "16-delsfinal" },
+    { r: 5, label: "8-delsfinal" },
+    { r: 6, label: "Kvart" },
+    { r: 7, label: "Semi" },
+    { r: 8, label: "Final" },
+  ];
+  const cols = rounds
+    .map(({ r, label }) => {
+      const ms = list.filter((m) => m.RoundNumber === r).sort((a, b) => a.MatchNumber - b.MatchNumber);
+      if (!ms.length) return "";
+      const cards = ms.map(koBracketCard).join("");
+      return `<div class="br-col"><div class="br-head">${label}</div><div class="br-matches">${cards}</div></div>`;
     })
     .join("");
 
-  const allPlaceholder = games.length && games.every((g) => isPlaceholderTeam(g.HomeTeam) && isPlaceholderTeam(g.AwayTeam));
-  const banner = allPlaceholder
-    ? `<p class="ko-intro">Lagen lottas automatiskt från grupptabellerna när gruppspelet är klart (27 juni). Koder som <strong>1A</strong> = vinnare grupp A.</p>`
-    : "";
-
   document.getElementById("knockout").innerHTML = `
     ${renderBestThirds()}
-    <div class="ko-bracket-head"><div class="section-head"><h2>Slutspelsträd</h2></div></div>
-    <div class="ko-chips">${chips}</div>
-    <h3 class="ko-round-title">${meta?.label || ""}</h3>
-    ${banner}
-    <div class="ko-grid">${cards || '<p class="hint">Inga matcher i denna omgång än.</p>'}</div>
+    <div class="section-head"><h2>Slutspelsträd</h2><span class="section-sub">dra i sidled →</span></div>
+    <div class="bracket-scroll"><div class="bracket">${cols}</div></div>
   `;
 }
 
@@ -1663,70 +1904,49 @@ function heroFlagBg(homeEn, awayEn) {
   return `style="--hero-bg-h:url('${h || ""}'); --hero-bg-a:url('${a || ""}')"`;
 }
 
+function heroLinkAttr(fx) {
+  if (fx.RoundNumber >= 4) return `data-ko="${fx.MatchNumber}"`;
+  const idx = state.picks.groupStage.findIndex((m) => m.homeEn === fx.HomeTeam && m.awayEn === fx.AwayTeam);
+  return idx >= 0 ? `data-open-match="${idx}"` : "";
+}
 function renderHero() {
   const el = document.getElementById("hero");
   if (!el) return;
-  const all = state.picks.groupStage
-    .map((m, idx) => ({ idx, m, f: findFixture(m.homeEn, m.awayEn) }))
-    .filter((x) => x.f?.DateUtc);
   const now = Date.now();
+  const cand = (state.fixtures?.matches || []).filter(
+    (m) => m.DateUtc && isRealTeam(m.HomeTeam) && isRealTeam(m.AwayTeam),
+  );
+  const live = cand.find((m) => findLive(m.HomeTeam, m.AwayTeam)?.state === "in");
+  const next = live
+    ? null
+    : cand.filter((m) => new Date(m.DateUtc).getTime() > now).sort((a, b) => new Date(a.DateUtc) - new Date(b.DateUtc))[0];
+  const fx = live || next;
+  if (!fx) { el.innerHTML = ""; return; }
 
-  const liveOne = all.find(({ m }) => findLive(m.homeEn, m.awayEn)?.state === "in");
-  if (liveOne) {
-    const live = findLive(liveOne.m.homeEn, liveOne.m.awayEn);
-    el.innerHTML = `<div class="hero-card live-card" data-open-match="${liveOne.idx}" ${heroFlagBg(liveOne.m.homeEn, liveOne.m.awayEn)}>
-      <div class="hero-bg"></div>
-      <div class="hero-content">
-        <div class="hero-tag"><span class="live-dot"></span>Live nu · ${live.clock || ""}</div>
-        <div class="hero-teams">
-          <div class="hero-side">
-            ${teamLogoHtml(liveOne.m.homeEn, "lg")}
-            <div class="hero-team-name">${liveOne.m.homeSv}</div>
-          </div>
-          <div class="hero-vs-score">
-            <div class="hero-big-score">${live.homeScore}–${live.awayScore}</div>
-          </div>
-          <div class="hero-side">
-            ${teamLogoHtml(liveOne.m.awayEn, "lg")}
-            <div class="hero-team-name">${liveOne.m.awaySv}</div>
-          </div>
-        </div>
-        <div class="hero-sub">${liveOne.f.Location || ""}</div>
-      </div>
-    </div>`;
-    return;
+  const homeSv = svName(fx.HomeTeam), awaySv = svName(fx.AwayTeam);
+  const roundTag = fx.RoundNumber >= 4 ? koRoundLabel(fx.RoundNumber) : (fx.Group || "");
+  let tag, centre;
+  if (live) {
+    const lv = findLive(fx.HomeTeam, fx.AwayTeam);
+    tag = `<span class="live-dot"></span>Live nu · ${lv.clock || ""}${roundTag ? " · " + roundTag : ""}`;
+    centre = `<div class="hero-big-score">${lv.homeScore}–${lv.awayScore}</div>`;
+  } else {
+    const msToGo = new Date(fx.DateUtc).getTime() - now;
+    const hours = Math.floor(msToGo / 3_600_000), days = Math.floor(hours / 24);
+    const cd = days > 0 ? `${days}d ${hours % 24}h` : hours > 0 ? `${hours}h ${Math.floor((msToGo % 3_600_000) / 60_000)}m` : `${Math.floor(msToGo / 60_000)} min`;
+    tag = `${roundTag ? roundTag + " · " : "Nästa match · "}om ${cd}`;
+    centre = `<div class="hero-vs-txt">vs</div><div class="hero-time">${formatDate(fx.DateUtc)}</div>`;
   }
-
-  const next = all
-    .filter((x) => new Date(x.f.DateUtc).getTime() > now)
-    .sort((a, b) => new Date(a.f.DateUtc) - new Date(b.f.DateUtc))[0];
-  if (!next) {
-    el.innerHTML = "";
-    return;
-  }
-  const ms = new Date(next.f.DateUtc).getTime() - now;
-  const hours = Math.floor(ms / 3_600_000);
-  const days = Math.floor(hours / 24);
-  const countdown = days > 0 ? `${days}d ${hours % 24}h` : hours > 0 ? `${hours}h ${Math.floor((ms % 3_600_000) / 60_000)}m` : `${Math.floor(ms / 60_000)} min`;
-  el.innerHTML = `<div class="hero-card" data-open-match="${next.idx}" ${heroFlagBg(next.m.homeEn, next.m.awayEn)}>
+  el.innerHTML = `<div class="hero-card ${live ? "live-card" : ""}" ${heroLinkAttr(fx)} ${heroFlagBg(fx.HomeTeam, fx.AwayTeam)}>
     <div class="hero-bg"></div>
     <div class="hero-content">
-      <div class="hero-tag">Nästa match · om ${countdown}</div>
+      <div class="hero-tag">${tag}</div>
       <div class="hero-teams">
-        <div class="hero-side">
-          ${teamLogoHtml(next.m.homeEn, "lg")}
-          <div class="hero-team-name">${next.m.homeSv}</div>
-        </div>
-        <div class="hero-vs-score">
-          <div class="hero-vs-txt">vs</div>
-          <div class="hero-time">${formatDate(next.f.DateUtc)}</div>
-        </div>
-        <div class="hero-side">
-          ${teamLogoHtml(next.m.awayEn, "lg")}
-          <div class="hero-team-name">${next.m.awaySv}</div>
-        </div>
+        <div class="hero-side">${teamLogoHtml(fx.HomeTeam, "lg")}<div class="hero-team-name">${homeSv}</div></div>
+        <div class="hero-vs-score">${centre}</div>
+        <div class="hero-side">${teamLogoHtml(fx.AwayTeam, "lg")}<div class="hero-team-name">${awaySv}</div></div>
       </div>
-      <div class="hero-sub">${next.f.Location || ""}</div>
+      <div class="hero-sub">${fx.Location || ""}</div>
     </div>
   </div>`;
 }
@@ -1756,13 +1976,26 @@ function renderPulse() {
 }
 
 function render() {
+  // Auto-set the WC winner once the final is decided so the +2 bonus lands.
+  const ks = knockoutState();
+  if (ks.champion && !state.picks.actualWinner) {
+    const champFx = (state.fixtures?.matches || []).find(
+      (m) => isRealTeam(m.HomeTeam) && normTeam(toEspnName(m.HomeTeam)) === ks.champion,
+    ) || (state.fixtures?.matches || []).find(
+      (m) => isRealTeam(m.AwayTeam) && normTeam(toEspnName(m.AwayTeam)) === ks.champion,
+    );
+    const enName = champFx ? (normTeam(toEspnName(champFx.HomeTeam)) === ks.champion ? champFx.HomeTeam : champFx.AwayTeam) : null;
+    if (enName) state.picks.actualWinner = enName;
+  }
   const scores = computeScores();
   renderScoreboard(scores);
+  renderTitleRace();
   renderHero();
   renderPulse();
   renderMatches();
   if (state.tab === "groups") renderGroups();
   if (state.tab === "sweden") renderSweden();
+  if (state.tab === "knockout") renderKnockout();
   renderUpdated();
 }
 
@@ -1772,6 +2005,14 @@ document.addEventListener("click", (e) => {
 
   const koChip = e.target.closest("[data-ko-round]");
   if (koChip) { state.koRound = Number(koChip.dataset.koRound); renderKnockout(); return; }
+
+  const koCard = e.target.closest("[data-ko]");
+  if (koCard) {
+    const mn = Number(koCard.dataset.ko);
+    const fx = state.fixtures.matches.find((x) => x.MatchNumber === mn);
+    if (fx) openKoDetail(fx);
+    return;
+  }
 
   const skRow = e.target.closest(".sk-row[data-scorer]");
   if (skRow) { openScorer(skRow.dataset.scorer); return; }
@@ -2158,6 +2399,81 @@ async function openDetail(idx) {
   } catch (err) {
     extra().innerHTML = `${detailVenueHtml({ gameInfo: { venue: f?.Location ? { fullName: f.Location } : null } })}
       <p class="detail-empty">Kunde inte hämta extra statistik just nu.</p>`;
+  }
+}
+
+let _svByEn = null;
+function svName(en) {
+  if (!en) return en;
+  if (!_svByEn) {
+    _svByEn = {};
+    for (const [sv, e] of Object.entries(state.picks?.mapping || {})) _svByEn[normTeam(e)] = sv;
+  }
+  return _svByEn[normTeam(en)] || _svByEn[normTeam(toEspnName(en))] || en;
+}
+function koRoundLabel(r) {
+  return { 4: "Sextondelsfinal", 5: "Åttondelsfinal", 6: "Kvartsfinal", 7: "Semifinal", 8: "Final / Bronsmatch" }[r] || "";
+}
+// Result line for a knockout match (handles live, extra time, penalties, upcoming)
+function koScoreLine(fx) {
+  const live = findLive(fx.HomeTeam, fx.AwayTeam);
+  if (live?.state === "in")
+    return `<span class="detail-score live">${live.homeScore}–${live.awayScore}</span><span class="live-badge"><span class="live-dot"></span>${live.clock || ""}</span>`;
+  const info = koInfo(fx.HomeTeam, fx.AwayTeam);
+  let hs = fx.HomeTeamScore, as = fx.AwayTeamScore;
+  if (info) { hs = info.hs; as = info.as; }
+  if (hs != null && as != null) {
+    let extra = "";
+    if (info?.isPens && info.penH != null) extra = ` <span class="ko-extra">straffar ${info.penH}–${info.penA}</span>`;
+    else if (info?.isAet) extra = ` <span class="ko-extra">e.f.</span>`;
+    return `<span class="detail-score">${hs}–${as}</span>${extra}`;
+  }
+  return fx.DateUtc ? `<span class="detail-when">${formatDate(fx.DateUtc)}</span>` : "";
+}
+
+async function openKoDetail(fx) {
+  if (!fx || !isRealTeam(fx.HomeTeam) || !isRealTeam(fx.AwayTeam)) return;
+  const dlg = document.getElementById("detail");
+  const body = document.getElementById("detail-body");
+  const homeSv = svName(fx.HomeTeam), awaySv = svName(fx.AwayTeam);
+  const m = { homeEn: fx.HomeTeam, awayEn: fx.AwayTeam, homeSv, awaySv, picks: {} };
+  body.innerHTML = `
+    ${sheetHeader("detail")}
+    <header class="detail-header">
+      <div class="detail-round-tag">${koRoundLabel(fx.RoundNumber)}</div>
+      <div class="detail-hero">
+        <div class="detail-team-cell">${teamLogoHtml(fx.HomeTeam, "lg")}<span class="detail-team-name">${homeSv}</span></div>
+        <div class="detail-vs">${koScoreLine(fx) || '<span class="detail-vs-txt">vs</span>'}</div>
+        <div class="detail-team-cell">${teamLogoHtml(fx.AwayTeam, "lg")}<span class="detail-team-name">${awaySv}</span></div>
+      </div>
+    </header>
+    <div id="detail-extra"><div class="skel skel-line"></div><div class="skel skel-line"></div></div>`;
+  document.documentElement.classList.add("modal-open");
+  dlg.showModal();
+  const extra = () => document.getElementById("detail-extra");
+  try {
+    const eid = await getEventId(fx.HomeTeam, fx.AwayTeam, fx.DateUtc);
+    if (!eid) {
+      extra().innerHTML = `${detailVenueHtml({ gameInfo: { venue: fx.Location ? { fullName: fx.Location } : null } })}<p class="detail-empty">Statistik och höjdpunkter dyker upp närmare matchstart.</p>`;
+      return;
+    }
+    const summary = await getSummary(eid);
+    const oddsObj = summary.pickcenter?.[0] || summary.odds?.[0];
+    const played = fx.HomeTeamScore != null || !!koInfo(fx.HomeTeam, fx.AwayTeam);
+    extra().innerHTML = [
+      detailOddsHtml(oddsObj),
+      detailProbabilityHtml(oddsObj, m),
+      played ? "" : detailPreviewHtml(summary, m, oddsObj),
+      detailFormHtml(summary),
+      detailHighlightsHtml(summary),
+      collapsible("Analys", detailArticleHtml(summary)),
+      collapsible("Head-to-head", detailH2HHtml(summary)),
+      collapsible("Händelser", detailEventsHtml(summary)),
+      collapsible("Nyheter", detailNewsHtml(summary, m)),
+      detailVenueHtml(summary) || detailVenueHtml({ gameInfo: { venue: fx.Location ? { fullName: fx.Location } : null } }),
+    ].filter(Boolean).join("\n");
+  } catch (err) {
+    extra().innerHTML = `<p class="detail-empty">Kunde inte hämta statistik just nu.</p>`;
   }
 }
 

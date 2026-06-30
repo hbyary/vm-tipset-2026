@@ -23,30 +23,27 @@
 </header>
 
 <main id="view-home" class="view">
+  <section id="titlerace" class="block"></section>
   <section id="hero" class="hero"></section>
-  <section id="pulse" class="pulse-wrap"></section>
   <section class="block">
     <div class="section-head">
       <h2>Ställning</h2>
-      <span class="section-sub">Tävlingen</span>
+      <span class="section-sub">Slutställning gruppspel</span>
     </div>
     <div id="podium" class="podium"></div>
     <ol id="scoreboard"></ol>
-    <p class="hint">1p per rätt 1X2 · 2p bonus för VM-vinnare · tryck på en spelare för analys</p>
+    <p class="hint">1p per rätt 1X2 · 2p bonus för rätt VM-vinnare · tryck på en spelare för analys</p>
   </section>
+  <section id="pulse" class="pulse-wrap"></section>
 
-  <section class="block">
-    <div class="section-head">
-      <h2>Matcher</h2>
-    </div>
+  <details class="block hist-wrap">
+    <summary class="hist-summary"><span class="col-title">Gruppspelets matcher</span><span class="col-chevron">▾</span></summary>
     <div class="filters">
       <button class="filter active" data-filter="all">Alla</button>
-      <button class="filter" data-filter="live"><span class="live-dot"></span>Live</button>
       <button class="filter" data-filter="played">Spelade</button>
-      <button class="filter" data-filter="upcoming">Kommande</button>
     </div>
     <div id="matches"></div>
-  </section>
+  </details>
 </main>
 
 <main id="view-sweden" class="view" hidden>
@@ -82,6 +79,10 @@
     <svg viewBox="0 0 24 24" class="navicon"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9h5v-5h4v5h5v-9"/></svg>
     <span>Hem</span>
   </button>
+  <button class="navbtn" data-tab="knockout" aria-label="Slutspel">
+    <svg viewBox="0 0 24 24" class="navicon"><path d="M6 4h12v3a6 6 0 0 1-12 0z"/><path d="M6 5H3.5v1.5A3 3 0 0 0 6 9M18 5h2.5v1.5A3 3 0 0 1 18 9"/><path d="M12 13v4M9 20h6M10 17h4"/></svg>
+    <span>Slutspel</span>
+  </button>
   <button class="navbtn" data-tab="sweden" aria-label="Sverige">
     <svg viewBox="0 0 24 24" class="navicon"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5v17"/></svg>
     <span>Sverige</span>
@@ -93,10 +94,6 @@
   <button class="navbtn" data-tab="groups" aria-label="Grupper">
     <svg viewBox="0 0 24 24" class="navicon"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>
     <span>Grupper</span>
-  </button>
-  <button class="navbtn" data-tab="knockout" aria-label="Slutspel">
-    <svg viewBox="0 0 24 24" class="navicon"><path d="M6 4h12v3a6 6 0 0 1-12 0z"/><path d="M6 5H3.5v1.5A3 3 0 0 0 6 9M18 5h2.5v1.5A3 3 0 0 1 18 9"/><path d="M12 13v4M9 20h6M10 17h4"/></svg>
-    <span>Slutspel</span>
   </button>
 </nav>
 
