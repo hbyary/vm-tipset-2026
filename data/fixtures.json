@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-06-30T01:31:25Z",
+  "fetchedAt": "2026-06-30T06:16:59Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -910,9 +910,9 @@
       "HomeTeam": "Netherlands",
       "AwayTeam": "Morocco",
       "Group": null,
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 1,
+      "AwayTeamScore": 1,
+      "Winner": "Morocco"
     },
     {
       "MatchNumber": 78,
@@ -1064,7 +1064,7 @@
       "DateUtc": "2026-07-04 17:00:00Z",
       "Location": "Houston Stadium",
       "HomeTeam": "Canada",
-      "AwayTeam": "To be announced",
+      "AwayTeam": "Morocco",
       "Group": null,
       "HomeTeamScore": null,
       "AwayTeamScore": null,
