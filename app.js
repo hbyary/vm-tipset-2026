@@ -770,6 +770,12 @@ function playerNarrative(ix) {
   return out;
 }
 
+function sheetHeader(target) {
+  // Sticky header lives inside the scrolling sheet (page content), so the close
+  // control is always in the visible band between the browser toolbars.
+  return `<div class="sheet-head"><span class="sheet-grab"></span><button class="detail-close" data-close="${target}" aria-label="Stäng">✕</button></div>`;
+}
+
 function openScorer(key) {
   const det = scorerGoals.get(key);
   if (!det) return;
@@ -785,6 +791,7 @@ function openScorer(key) {
     .join("");
   const pens = goals.filter((g) => g.penalty).length;
   document.getElementById("player-body").innerHTML = `
+    ${sheetHeader("player")}
     <header class="detail-header">
       <div class="player-hero">
         ${teamLogoHtml(det.team, "lg") || `<span class="avatar lg" style="${playerPalette(det.name)}">${playerInitial(det.name)}</span>`}
@@ -940,6 +947,7 @@ function openPlayer(name) {
     .join("");
 
   document.getElementById("player-body").innerHTML = `
+    ${sheetHeader("player")}
     <header class="detail-header">
       <div class="player-hero">
         <span class="avatar lg" style="${playerPalette(name)}">${playerInitial(name)}</span>
@@ -2103,6 +2111,7 @@ async function openDetail(idx) {
     ${detailContextHtml(m)}
   `;
   body.innerHTML = `
+    ${sheetHeader("detail")}
     <header class="detail-header">
       <div class="detail-hero">
         <div class="detail-team-cell">

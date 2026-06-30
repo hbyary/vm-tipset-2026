@@ -542,37 +542,54 @@ footer a { color: var(--muted); }
   to { transform: translateY(0); opacity: 1; }
 }
 #detail-body {
-  padding: 52px 16px calc(24px + var(--safe-bottom));
+  padding: 0 16px calc(24px + var(--safe-bottom));
   max-height: 90vh;
   max-height: 90dvh;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
-/* Anchored to the viewport top-right so it is ALWAYS reachable, never under the notch */
-.detail-close {
-  position: fixed;
-  top: calc(var(--safe-top) + 12px);
-  right: 16px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid var(--border-strong);
-  background: rgba(19, 28, 46, 0.92);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  color: var(--text);
-  font-size: 17px;
-  font-weight: 700;
-  cursor: pointer;
-  z-index: 60;
+/* Sticky header inside the sheet — part of page content, so it stays in the
+   visible band between the browser toolbars and is always reachable. */
+.sheet-head {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  height: 44px;
+  margin: 0 -16px 6px;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border);
 }
+.sheet-grab {
+  width: 40px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--border-strong);
+}
+.detail-close {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.detail-close:active { background: var(--border-strong); }
 .detail-header {
-  padding-right: 50px;
+  padding-right: 8px;
   margin-bottom: 18px;
 }
 .detail-teams {
@@ -1670,7 +1687,7 @@ tr.is-sweden td { font-weight: 700; }
 #player::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(4px); }
 #player[open] { animation: sheetUp 0.25s ease-out; }
 #player-body {
-  padding: 52px 16px calc(24px + var(--safe-bottom));
+  padding: 0 16px calc(24px + var(--safe-bottom));
   max-height: 90vh;
   max-height: 90dvh;
   overflow-y: auto;
