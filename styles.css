@@ -1166,6 +1166,18 @@ tr.is-sweden td { font-weight: 700; }
 .sg-clock { font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
 .sg-match { font-weight: 600; }
 .sg-pen { font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px; }
+/* Scorer detail grouped by match */
+.sg-match-row { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+.sg-match-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sg-match-teams { font-weight: 700; font-size: 13px; }
+.sg-goal-pill { background: var(--accent); color: #0b1220; font-weight: 800; font-size: 12px; border-radius: 999px; min-width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; padding: 0 6px; }
+.sg-match-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.sg-mins { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.sg-min { font-size: 12px; font-weight: 700; color: var(--accent); background: rgba(250,204,21,0.12); border-radius: 6px; padding: 2px 8px; font-variant-numeric: tabular-nums; }
+.sg-min .sg-pen { margin-left: 4px; }
+/* Sweden KO card round label */
+.se-ko-round { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); font-weight: 700; margin-bottom: 8px; }
+.se-ko-list .match { margin-bottom: 10px; }
 .sk-rank {
   font-size: 13px;
   font-weight: 700;
@@ -1605,17 +1617,15 @@ tr.is-sweden td { font-weight: 700; }
 .bracket-scroll::-webkit-scrollbar { display: none; }
 .bracket {
   display: flex;
-  gap: 14px;
+  gap: 18px;
   align-items: stretch;
   min-width: min-content;
 }
 .br-col {
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
-  gap: 8px;
   flex: 0 0 auto;
-  width: 150px;
+  width: 178px;
 }
 .br-head {
   font-size: 10px;
@@ -1624,23 +1634,51 @@ tr.is-sweden td { font-weight: 700; }
   font-weight: 700;
   color: var(--muted);
   text-align: center;
-  margin-bottom: 2px;
-  position: sticky;
-  top: 0;
+  margin-bottom: 8px;
 }
-.br-matches { display: flex; flex-direction: column; justify-content: space-around; gap: 8px; flex: 1; }
+.br-matches { display: flex; flex-direction: column; justify-content: space-around; flex: 1; }
 .br-card {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  min-height: 56px;
   background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 6px 8px;
+  overflow: hidden;
   cursor: pointer;
+  position: relative;
 }
+.br-card.br-empty { background: transparent; border-style: dashed; opacity: 0.4; cursor: default; }
 .br-card.live { border-color: rgba(239,68,68,0.5); }
 .br-card:active { border-color: var(--border-strong); }
+/* connector stub to the next column */
+.br-col:not(.br-lastcol) .br-card:not(.br-empty)::after {
+  content: "";
+  position: absolute;
+  right: -18px;
+  top: 50%;
+  width: 18px;
+  height: 1px;
+  background: var(--border);
+}
+.br-meta {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1px;
+  padding: 2px;
+  border-right: 1px solid var(--border);
+  background: rgba(0,0,0,0.15);
+}
+.brm-d { font-size: 8.5px; font-weight: 700; color: var(--text-soft); text-align: center; line-height: 1.1; }
+.brm-t { font-size: 8.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.brm-s { font-size: 8px; color: var(--accent); font-weight: 700; text-transform: uppercase; }
+.brm-live { display: flex; }
+.br-teams { display: flex; flex-direction: column; justify-content: center; padding: 4px 8px; min-width: 0; }
 .br-row {
   display: grid;
-  grid-template-columns: 18px 1fr auto;
+  grid-template-columns: 16px 1fr auto;
   align-items: center;
   gap: 6px;
   padding: 3px 0;
@@ -1649,12 +1687,13 @@ tr.is-sweden td { font-weight: 700; }
 .br-row + .br-row { border-top: 1px solid var(--border); }
 .br-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .br-score { font-weight: 800; font-variant-numeric: tabular-nums; }
+.br-pen { font-size: 8px; color: var(--muted); font-weight: 700; }
 .br-win .br-name { color: var(--text); }
 .br-win .br-score { color: var(--win); }
-.br-lose { opacity: 0.5; }
-.br-ph-dot { width: 18px; height: 18px; border-radius: 50%; background: rgba(255,255,255,0.06); }
-.br-pens { font-size: 9px; color: var(--muted); text-align: center; padding-top: 3px; text-transform: uppercase; letter-spacing: 0.3px; }
-.br-livetag { color: #fca5a5; display: flex; align-items: center; justify-content: center; gap: 4px; }
+.br-lose { opacity: 0.45; }
+.br-ph-dot { width: 16px; height: 16px; border-radius: 50%; background: rgba(255,255,255,0.06); }
+.br-bronze { margin-top: 16px; }
+.br-bronze .br-head { margin-bottom: 6px; }
 
 /* Best thirds */
 .bt-wrap { margin-bottom: 22px; }

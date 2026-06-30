@@ -1002,17 +1002,31 @@ function sheetHeader(target) {
 function openScorer(key) {
   const det = scorerGoals.get(key);
   if (!det) return;
-  const goals = det.goals.slice().sort((a, b) => parseInt(a.clock) - parseInt(b.clock));
-  const items = goals
-    .map(
-      (g) => `<li class="sg-row">
-        <span class="sg-clock">${g.clock || "?"}</span>
-        <span class="sg-match">${g.matchSv}</span>
-        ${g.penalty ? '<span class="sg-pen">straff</span>' : ""}
-      </li>`,
-    )
-    .join("");
+  const goals = det.goals.slice();
   const pens = goals.filter((g) => g.penalty).length;
+  // group by match, matches in chronological order, goals within by minute
+  const byMatch = new Map();
+  for (const g of goals) {
+    const mk = g.matchSv;
+    if (!byMatch.has(mk)) byMatch.set(mk, { matchSv: g.matchSv, date: g.date, goals: [] });
+    byMatch.get(mk).goals.push(g);
+  }
+  const matchGroups = [...byMatch.values()].sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+  const items = matchGroups
+    .map((grp) => {
+      const mins = grp.goals
+        .slice()
+        .sort((a, b) => parseInt(a.clock) - parseInt(b.clock))
+        .map((g) => `<span class="sg-min">${g.clock || "?"}${g.penalty ? " <span class='sg-pen'>str</span>" : ""}</span>`)
+        .join("");
+      const dstr = grp.date ? formatDate(grp.date) : "";
+      return `<li class="sg-match-row">
+        <div class="sg-match-head"><span class="sg-match-teams">${grp.matchSv}</span><span class="sg-goal-pill">${grp.goals.length}</span></div>
+        <div class="sg-match-sub">${dstr}</div>
+        <div class="sg-mins">${mins}</div>
+      </li>`;
+    })
+    .join("");
   document.getElementById("player-body").innerHTML = `
     ${sheetHeader("player")}
     <header class="detail-header">
@@ -1467,6 +1481,138 @@ function swedenR32Path() {
   return { first: find("1F"), second: find("2F"), third };
 }
 
+function swedenKnockout() {
+  const isSwe = (t) => normTeam(toEspnName(t)) === "sweden";
+  const ms = (state.fixtures?.matches || [])
+    .filter((m) => m.RoundNumber >= 4 && (isSwe(m.HomeTeam) || isSwe(m.AwayTeam)))
+    .sort((a, b) => a.RoundNumber - b.RoundNumber);
+  let eliminated = false, lastRound = null, eliminatedBy = null;
+  for (const m of ms) {
+    const loser = koLoserOf(m);
+    if (loser && isSwe(loser)) {
+      eliminated = true;
+      lastRound = m.RoundNumber;
+      eliminatedBy = isSwe(m.HomeTeam) ? m.AwayTeam : m.HomeTeam;
+    }
+  }
+  const nextMatch = ms.find((m) => {
+    const info = koInfo(m.HomeTeam, m.AwayTeam);
+    const decided = !!info || (m.HomeTeamScore != null && m.AwayTeamScore != null);
+    return !decided;
+  });
+  const ks = knockoutState();
+  return { matches: ms, eliminated, lastRound, eliminatedBy, nextMatch, alive: ks.alive.includes("sweden"), champion: ks.champion === "sweden" };
+}
+
+function swedenKoCard(m) {
+  const homeSv = svName(m.HomeTeam), awaySv = svName(m.AwayTeam);
+  const tappable = isRealTeam(m.HomeTeam) && isRealTeam(m.AwayTeam);
+  return `<article class="match" ${tappable ? `data-ko="${m.MatchNumber}"` : ""}>
+    <div class="se-ko-round">${koRoundLabel(m.RoundNumber)}${m.DateUtc ? " · " + formatDate(m.DateUtc) : ""}${m.Location ? " · " + m.Location : ""}</div>
+    <div class="mc-fixture">
+      <div class="mc-team home">${teamLogoHtml(m.HomeTeam)}<span class="mc-name">${homeSv}</span></div>
+      <div class="mc-center">${koScoreLine(m)}</div>
+      <div class="mc-team away"><span class="mc-name">${awaySv}</span>${teamLogoHtml(m.AwayTeam)}</div>
+    </div>
+  </article>`;
+}
+
+async function renderSwedenKnockout(el, base) {
+  const ko = swedenKnockout();
+  const finishLabel = base.sweRank ? `${base.sweRank}:a i Grupp F` : "Grupp F";
+
+  // status line
+  let statusIcon = "🇸🇪", statusText;
+  if (ko.champion) { statusIcon = "🏆"; statusText = `<strong>Sverige är världsmästare!</strong> Sagolikt.`; }
+  else if (ko.eliminated) {
+    statusIcon = "🚫";
+    statusText = `Sveriges VM är slut — utslagna i ${koRoundLabel(ko.lastRound).toLowerCase()} mot <strong>${svName(ko.eliminatedBy)}</strong>. Gick vidare från gruppen som ${finishLabel}.`;
+  } else if (ko.nextMatch) {
+    const opp = normTeam(toEspnName(ko.nextMatch.HomeTeam)) === "sweden" ? ko.nextMatch.AwayTeam : ko.nextMatch.HomeTeam;
+    statusText = `Klara från gruppspelet (${finishLabel}). Näst på tur: <strong>${koRoundLabel(ko.nextMatch.RoundNumber)}</strong> mot <strong>${svName(opp)}</strong>${ko.nextMatch.DateUtc ? " · " + formatDate(ko.nextMatch.DateUtc) : ""}.`;
+  } else {
+    statusText = `Vidare från gruppspelet som ${finishLabel}.`;
+  }
+
+  const koCards = ko.matches.length
+    ? ko.matches.map(swedenKoCard).join("")
+    : `<p class="gr-actual">Sveriges slutspelsmatcher dyker upp här.</p>`;
+
+  const race = swedenGoalRace(base);
+  const raceRows = race.rows
+    .map((r, i) => `<li class="gr-row ${i === 0 ? "gr-lead" : ""}">
+      <span class="gr-rank">${i + 1}</span>
+      <span class="gr-avatar" style="${playerPalette(r.p)}">${playerInitial(r.p)}</span>
+      <span class="gr-name">${r.p}</span>
+      <span class="gr-guess">${r.gFor}–${r.gAgainst}</span>
+      <span class="gr-dist">${r.dist === 0 ? "🎯 prick" : "±" + r.dist}</span>
+    </li>`)
+    .join("");
+
+  const tableRows = base.grpF
+    .map(
+      (r, i) => `<tr class="${i < 2 ? "q-top2" : i === 2 ? "q-third" : ""} ${r.name === "Sweden" ? "is-sweden" : ""}">
+        <td class="pos">${i + 1}</td>
+        <td class="team">${teamLogoHtml(r.name, "sm")} ${r.sv}</td>
+        <td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td>
+        <td>${r.gf}-${r.ga}</td><td class="pts">${r.pts}</td>
+      </tr>`,
+    )
+    .join("");
+
+  el.innerHTML = `
+    <section class="se-summary">
+      <div class="se-kpi"><span class="se-kpi-lbl">Grupp F</span><span class="se-kpi-val">${base.sweRank ? base.sweRank + ":a" : "–"}</span></div>
+      <div class="se-kpi"><span class="se-kpi-lbl">Poäng grupp</span><span class="se-kpi-val">${base.pts}</span></div>
+      <div class="se-kpi"><span class="se-kpi-lbl">Mål grupp</span><span class="se-kpi-val">${base.gf}-${base.ga}</span></div>
+    </section>
+    <section class="detail-section">
+      <h3>Läget nu</h3>
+      <div class="insights"><div class="insight"><span class="insight-ico">${statusIcon}</span><span class="insight-txt">${statusText}</span></div></div>
+      <div id="se-ko-extra"></div>
+    </section>
+    <section class="detail-section">
+      <h3>Sveriges slutspel</h3>
+      <div class="se-ko-list">${koCards}</div>
+    </section>
+    <section class="detail-section">
+      <h3>Måltipset · särskiljare</h3>
+      <p class="gr-actual">Sverige <strong>${base.gf}–${base.ga}</strong> i gruppspelet (särskiljaren räknas på gruppspelets mål). Närmast vinner.</p>
+      <ol class="gr-list">${raceRows}</ol>
+    </section>
+    <details class="block" style="padding:0;border:1px solid var(--border);border-radius:14px;overflow:hidden">
+      <summary class="gc-summary"><span class="gc-grp">Grupp F · slutställning</span><span class="col-chevron">▾</span></summary>
+      <div class="gc-body"><table class="group-table"><thead><tr><th></th><th>Lag</th><th>S</th><th>V</th><th>O</th><th>F</th><th>Mål</th><th>P</th></tr></thead><tbody>${tableRows}</tbody></table></div>
+    </details>
+    <div id="se-news" class="detail-section"></div>
+  `;
+
+  // async: opponent analysis for next match + news
+  if (ko.nextMatch) {
+    try {
+      const eid = await getEventId(ko.nextMatch.HomeTeam, ko.nextMatch.AwayTeam, ko.nextMatch.DateUtc);
+      if (eid) {
+        const summary = await getSummary(eid);
+        const oddsObj = summary.pickcenter?.[0] || summary.odds?.[0];
+        const p = impliedProbs(oddsObj);
+        const ex = document.getElementById("se-ko-extra");
+        if (ex && p) {
+          const sweHome = normTeam(toEspnName(ko.nextMatch.HomeTeam)) === "sweden";
+          const pSwe = Math.round((sweHome ? p.home : p.away) * 100);
+          ex.innerHTML = `<div class="insights"><div class="insight"><span class="insight-ico">💰</span><span class="insight-txt">Marknaden ger Sverige <strong>${pSwe}%</strong> att vinna nästa match (oavgjort ${Math.round(p.draw * 100)}%). Tryck på matchen för full analys.</span></div></div>`;
+        }
+      }
+    } catch (e) { /* ignore */ }
+  }
+  const news = await swedenNews();
+  const newsEl = document.getElementById("se-news");
+  if (newsEl && news.length) {
+    newsEl.innerHTML = `<h3>Senaste om Sverige</h3><ul class="news-list">${news
+      .map((a) => `<li><a href="${a.links?.web?.href || "#"}" target="_blank" rel="noopener">${a.headline}</a>${a.description ? `<span class="news-desc">${a.description}</span>` : ""}</li>`)
+      .join("")}</ul>`;
+  }
+}
+
 async function renderSweden() {
   const el = document.getElementById("sweden");
   const base = swedenBase();
@@ -1474,6 +1620,8 @@ async function renderSweden() {
     el.innerHTML = `<p class="empty-state">Inga Sverige-matcher i schemat.</p>`;
     return;
   }
+  const groupDone = base.remaining.length === 0;
+  if (groupDone) return renderSwedenKnockout(el, base);
 
   const matchCards = base.games
     .map(({ m, idx, f }) => {
@@ -1701,6 +1849,7 @@ async function renderHighlights() {
         opponentSv: teamIsHome ? m.awaySv : m.homeSv,
         clock: g.clock,
         penalty: g.penalty,
+        date: f.DateUtc || "",
       });
       scorerGoals.set(key, det);
     }
@@ -1841,8 +1990,19 @@ function koSlotShort(slot) {
   return slot;
 }
 
+// Official 2026 bracket structure (visual top→bottom order, by MatchNumber).
+// Derived from confirmed advancers + the FIFA bracket layout.
+const BRACKET = {
+  r32: [74, 77, 73, 75, 83, 84, 81, 82, 76, 78, 79, 80, 86, 88, 85, 87],
+  r16: [89, 90, 93, 94, 91, 92, 95, 96],
+  qf: [97, 98, 99, 100],
+  sf: [101, 102],
+  final: 104,
+  third: 103,
+};
+
 function koBracketCard(m) {
-  const home = isRealTeam(m.HomeTeam), away = isRealTeam(m.AwayTeam);
+  if (!m) return `<article class="br-card br-empty"></article>`;
   const info = koInfo(m.HomeTeam, m.AwayTeam);
   const live = findLive(m.HomeTeam, m.AwayTeam);
   const isLive = live?.state === "in";
@@ -1852,48 +2012,55 @@ function koBracketCard(m) {
   const loser = koLoserOf(m);
   const loserN = loser ? normTeam(toEspnName(loser)) : null;
   const decided = !!loserN;
-  const teamRow = (t, score) => {
+  const show = decided || isLive;
+  const d = m.DateUtc ? new Date(m.DateUtc) : null;
+  const dstr = d ? d.toLocaleDateString("sv-SE", { day: "numeric", month: "short" }).replace(".", "") : "";
+  const tstr = d ? d.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" }) : "";
+  let status = "";
+  if (isLive) status = `<span class="brm-live"><span class="live-dot"></span></span>`;
+  else if (info?.isPens) status = "str.";
+  else if (info?.isAet) status = "e.f.";
+  else if (decided) status = "FT";
+  const row = (t, score, pen) => {
     const real = isRealTeam(t);
     const isLoser = real && loserN === normTeam(toEspnName(t));
     const isWin = real && decided && !isLoser;
     const nm = real ? svName(t) : koSlotShort(t);
+    const penSup = pen != null && info?.isPens ? `<sup class="br-pen">${pen}</sup>` : "";
     return `<div class="br-row ${isLoser ? "br-lose" : ""} ${isWin ? "br-win" : ""}">
       ${real ? teamLogoHtml(t, "sm") : '<span class="br-ph-dot"></span>'}
       <span class="br-name">${nm}</span>
-      <span class="br-score">${score != null && (decided || isLive) ? score : ""}</span>
+      <span class="br-score">${show && score != null ? score : ""}${penSup}</span>
     </div>`;
   };
-  const pens = info?.isPens && info.penH != null ? `<div class="br-pens">straffar ${info.penH}–${info.penA}</div>` : info?.isAet ? `<div class="br-pens">efter förläng.</div>` : "";
-  const liveBadge = isLive ? `<div class="br-pens br-livetag"><span class="live-dot"></span>${live.clock || "live"}</div>` : "";
-  return `<article class="br-card ${isLive ? "live" : ""}" ${home && away ? `data-ko="${m.MatchNumber}"` : ""}>
-    ${teamRow(m.HomeTeam, hs)}
-    ${teamRow(m.AwayTeam, as)}
-    ${liveBadge || pens}
+  const tappable = isRealTeam(m.HomeTeam) && isRealTeam(m.AwayTeam);
+  return `<article class="br-card ${isLive ? "live" : ""}" ${tappable ? `data-ko="${m.MatchNumber}"` : ""}>
+    <div class="br-meta"><span class="brm-d">${dstr}</span><span class="brm-t">${tstr}</span><span class="brm-s">${status}</span></div>
+    <div class="br-teams">${row(m.HomeTeam, hs, info?.penH)}${row(m.AwayTeam, as, info?.penA)}</div>
   </article>`;
 }
 
 function renderKnockout() {
-  const list = state.fixtures?.matches || [];
-  const rounds = [
-    { r: 4, label: "16-delsfinal" },
-    { r: 5, label: "8-delsfinal" },
-    { r: 6, label: "Kvart" },
-    { r: 7, label: "Semi" },
-    { r: 8, label: "Final" },
-  ];
-  const cols = rounds
-    .map(({ r, label }) => {
-      const ms = list.filter((m) => m.RoundNumber === r).sort((a, b) => a.MatchNumber - b.MatchNumber);
-      if (!ms.length) return "";
-      const cards = ms.map(koBracketCard).join("");
-      return `<div class="br-col"><div class="br-head">${label}</div><div class="br-matches">${cards}</div></div>`;
-    })
-    .join("");
+  const byNum = {};
+  (state.fixtures?.matches || []).forEach((m) => (byNum[m.MatchNumber] = m));
+  const col = (label, nums) =>
+    `<div class="br-col"><div class="br-head">${label}</div><div class="br-matches">${nums.map((n) => koBracketCard(byNum[n])).join("")}</div></div>`;
+  const finalCol = `<div class="br-col br-lastcol">
+    <div class="br-head">Final</div>
+    <div class="br-matches">${koBracketCard(byNum[BRACKET.final])}</div>
+    <div class="br-bronze"><div class="br-head">Bronsmatch</div>${koBracketCard(byNum[BRACKET.third])}</div>
+  </div>`;
 
   document.getElementById("knockout").innerHTML = `
     ${renderBestThirds()}
     <div class="section-head"><h2>Slutspelsträd</h2><span class="section-sub">dra i sidled →</span></div>
-    <div class="bracket-scroll"><div class="bracket">${cols}</div></div>
+    <div class="bracket-scroll"><div class="bracket">
+      ${col("16-delsfinal", BRACKET.r32)}
+      ${col("8-delsfinal", BRACKET.r16)}
+      ${col("Kvartsfinal", BRACKET.qf)}
+      ${col("Semifinal", BRACKET.sf)}
+      ${finalCol}
+    </div></div>
   `;
 }
 
