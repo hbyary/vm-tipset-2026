@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-01T09:03:04Z",
+  "fetchedAt": "2026-07-01T12:20:03Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -941,7 +941,7 @@
     {
       "MatchNumber": 79,
       "RoundNumber": 4,
-      "DateUtc": "2026-07-01 01:00:00Z",
+      "DateUtc": "2026-07-01 02:00:00Z",
       "Location": "Mexico City Stadium",
       "HomeTeam": "Mexico",
       "AwayTeam": "Ecuador",
