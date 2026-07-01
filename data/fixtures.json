@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-01T17:29:30Z",
+  "fetchedAt": "2026-07-01T19:21:38Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -958,9 +958,9 @@
       "HomeTeam": "England",
       "AwayTeam": "Congo DR",
       "Group": null,
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 2,
+      "AwayTeamScore": 1,
+      "Winner": "England"
     },
     {
       "MatchNumber": 82,
@@ -1100,7 +1100,7 @@
       "DateUtc": "2026-07-06 00:00:00Z",
       "Location": "Mexico City Stadium",
       "HomeTeam": "Mexico",
-      "AwayTeam": "To be announced",
+      "AwayTeam": "England",
       "Group": null,
       "HomeTeamScore": null,
       "AwayTeamScore": null,
