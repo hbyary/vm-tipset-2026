@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-01T00:11:33Z",
+  "fetchedAt": "2026-07-01T05:06:51Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -946,9 +946,9 @@
       "HomeTeam": "Mexico",
       "AwayTeam": "Ecuador",
       "Group": null,
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 2,
+      "AwayTeamScore": 0,
+      "Winner": "Mexico"
     },
     {
       "MatchNumber": 80,
@@ -1099,7 +1099,7 @@
       "RoundNumber": 5,
       "DateUtc": "2026-07-06 00:00:00Z",
       "Location": "Mexico City Stadium",
-      "HomeTeam": "To be announced",
+      "HomeTeam": "Mexico",
       "AwayTeam": "To be announced",
       "Group": null,
       "HomeTeamScore": null,
