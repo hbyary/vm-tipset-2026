@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-01T22:48:15Z",
+  "fetchedAt": "2026-07-02T00:12:47Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -970,9 +970,9 @@
       "HomeTeam": "Belgium",
       "AwayTeam": "Senegal",
       "Group": null,
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 3,
+      "AwayTeamScore": 2,
+      "Winner": "Belgium"
     },
     {
       "MatchNumber": 81,
@@ -1124,7 +1124,7 @@
       "DateUtc": "2026-07-07 00:00:00Z",
       "Location": "Seattle Stadium",
       "HomeTeam": "To be announced",
-      "AwayTeam": "To be announced",
+      "AwayTeam": "Belgium",
       "Group": null,
       "HomeTeamScore": null,
       "AwayTeamScore": null,
