@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-02T00:12:47Z",
+  "fetchedAt": "2026-07-02T04:41:43Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -982,9 +982,9 @@
       "HomeTeam": "USA",
       "AwayTeam": "Bosnia and Herzegovina",
       "Group": null,
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 2,
+      "AwayTeamScore": 0,
+      "Winner": "USA"
     },
     {
       "MatchNumber": 84,
@@ -1123,7 +1123,7 @@
       "RoundNumber": 5,
       "DateUtc": "2026-07-07 00:00:00Z",
       "Location": "Seattle Stadium",
-      "HomeTeam": "To be announced",
+      "HomeTeam": "USA",
       "AwayTeam": "Belgium",
       "Group": null,
       "HomeTeamScore": null,
