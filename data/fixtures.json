@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-03T04:26:32Z",
+  "fetchedAt": "2026-07-03T07:47:09Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -1018,9 +1018,9 @@
       "HomeTeam": "Switzerland",
       "AwayTeam": "Algeria",
       "Group": null,
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 2,
+      "AwayTeamScore": 0,
+      "Winner": "Switzerland"
     },
     {
       "MatchNumber": 88,
@@ -1147,7 +1147,7 @@
       "RoundNumber": 5,
       "DateUtc": "2026-07-07 20:00:00Z",
       "Location": "BC Place Vancouver",
-      "HomeTeam": "To be announced",
+      "HomeTeam": "Switzerland",
       "AwayTeam": "To be announced",
       "Group": null,
       "HomeTeamScore": null,
