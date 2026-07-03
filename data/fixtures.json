@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-03T00:10:40Z",
+  "fetchedAt": "2026-07-03T04:26:32Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -1006,9 +1006,9 @@
       "HomeTeam": "Portugal",
       "AwayTeam": "Croatia",
       "Group": null,
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 2,
+      "AwayTeamScore": 1,
+      "Winner": "Portugal"
     },
     {
       "MatchNumber": 85,
@@ -1111,7 +1111,7 @@
       "RoundNumber": 5,
       "DateUtc": "2026-07-06 19:00:00Z",
       "Location": "Dallas Stadium",
-      "HomeTeam": "To be announced",
+      "HomeTeam": "Portugal",
       "AwayTeam": "Spain",
       "Group": null,
       "HomeTeamScore": null,
