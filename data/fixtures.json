@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-04T18:05:19Z",
+  "fetchedAt": "2026-07-04T19:45:53Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -1066,9 +1066,9 @@
       "HomeTeam": "Canada",
       "AwayTeam": "Morocco",
       "Group": null,
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 0,
+      "AwayTeamScore": 3,
+      "Winner": "Morocco"
     },
     {
       "MatchNumber": 89,
@@ -1160,7 +1160,7 @@
       "DateUtc": "2026-07-09 20:00:00Z",
       "Location": "Boston Stadium",
       "HomeTeam": "To be announced",
-      "AwayTeam": "To be announced",
+      "AwayTeam": "Morocco",
       "Group": null,
       "HomeTeamScore": null,
       "AwayTeamScore": null,
