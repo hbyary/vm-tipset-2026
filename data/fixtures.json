@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-04T00:09:15Z",
+  "fetchedAt": "2026-07-04T04:20:52Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -1042,9 +1042,9 @@
       "HomeTeam": "Argentina",
       "AwayTeam": "Cabo Verde",
       "Group": null,
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 3,
+      "AwayTeamScore": 2,
+      "Winner": "Argentina"
     },
     {
       "MatchNumber": 87,
@@ -1054,9 +1054,9 @@
       "HomeTeam": "Colombia",
       "AwayTeam": "Ghana",
       "Group": null,
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 1,
+      "AwayTeamScore": 0,
+      "Winner": "Colombia"
     },
     {
       "MatchNumber": 90,
@@ -1135,7 +1135,7 @@
       "RoundNumber": 5,
       "DateUtc": "2026-07-07 16:00:00Z",
       "Location": "Atlanta Stadium",
-      "HomeTeam": "To be announced",
+      "HomeTeam": "Argentina",
       "AwayTeam": "Egypt",
       "Group": null,
       "HomeTeamScore": null,
@@ -1148,7 +1148,7 @@
       "DateUtc": "2026-07-07 20:00:00Z",
       "Location": "BC Place Vancouver",
       "HomeTeam": "Switzerland",
-      "AwayTeam": "To be announced",
+      "AwayTeam": "Colombia",
       "Group": null,
       "HomeTeamScore": null,
       "AwayTeamScore": null,
