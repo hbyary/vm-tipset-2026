@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-04T23:36:33Z",
+  "fetchedAt": "2026-07-05T03:53:02Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -1078,9 +1078,9 @@
       "HomeTeam": "Paraguay",
       "AwayTeam": "France",
       "Group": null,
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 0,
+      "AwayTeamScore": 1,
+      "Winner": "France"
     },
     {
       "MatchNumber": 91,
@@ -1159,7 +1159,7 @@
       "RoundNumber": 6,
       "DateUtc": "2026-07-09 20:00:00Z",
       "Location": "Boston Stadium",
-      "HomeTeam": "To be announced",
+      "HomeTeam": "France",
       "AwayTeam": "Morocco",
       "Group": null,
       "HomeTeamScore": null,
