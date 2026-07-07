@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-07T16:34:36Z",
+  "fetchedAt": "2026-07-07T19:07:02Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -1138,9 +1138,9 @@
       "HomeTeam": "Argentina",
       "AwayTeam": "Egypt",
       "Group": null,
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 3,
+      "AwayTeamScore": 2,
+      "Winner": "Argentina"
     },
     {
       "MatchNumber": 96,
@@ -1195,7 +1195,7 @@
       "RoundNumber": 6,
       "DateUtc": "2026-07-12 01:00:00Z",
       "Location": "Kansas City Stadium",
-      "HomeTeam": "To be announced",
+      "HomeTeam": "Argentina",
       "AwayTeam": "To be announced",
       "Group": null,
       "HomeTeamScore": null,
