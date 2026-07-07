@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-06T23:39:12Z",
+  "fetchedAt": "2026-07-07T03:50:59Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -1126,9 +1126,9 @@
       "HomeTeam": "USA",
       "AwayTeam": "Belgium",
       "Group": null,
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 1,
+      "AwayTeamScore": 4,
+      "Winner": "Belgium"
     },
     {
       "MatchNumber": 95,
@@ -1172,7 +1172,7 @@
       "DateUtc": "2026-07-10 19:00:00Z",
       "Location": "Los Angeles Stadium",
       "HomeTeam": "Spain",
-      "AwayTeam": "To be announced",
+      "AwayTeam": "Belgium",
       "Group": null,
       "HomeTeamScore": null,
       "AwayTeamScore": null,
