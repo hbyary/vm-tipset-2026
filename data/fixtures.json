@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-07T22:38:24Z",
+  "fetchedAt": "2026-07-08T00:01:18Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -1150,9 +1150,9 @@
       "HomeTeam": "Switzerland",
       "AwayTeam": "Colombia",
       "Group": null,
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 0,
+      "AwayTeamScore": 0,
+      "Winner": "Switzerland"
     },
     {
       "MatchNumber": 97,
@@ -1196,7 +1196,7 @@
       "DateUtc": "2026-07-12 01:00:00Z",
       "Location": "Kansas City Stadium",
       "HomeTeam": "Argentina",
-      "AwayTeam": "To be announced",
+      "AwayTeam": "Switzerland",
       "Group": null,
       "HomeTeamScore": null,
       "AwayTeamScore": null,
