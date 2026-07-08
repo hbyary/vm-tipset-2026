@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-08T13:08:03Z",
+  "fetchedAt": "2026-07-08T15:43:19Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -1097,7 +1097,7 @@
     {
       "MatchNumber": 92,
       "RoundNumber": 5,
-      "DateUtc": "2026-07-06 00:00:00Z",
+      "DateUtc": "2026-07-06 01:00:00Z",
       "Location": "Mexico City Stadium",
       "HomeTeam": "Mexico",
       "AwayTeam": "England",
