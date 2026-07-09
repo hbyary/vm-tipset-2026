@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-09T22:00:08Z",
+  "fetchedAt": "2026-07-09T23:22:29Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -1162,9 +1162,9 @@
       "HomeTeam": "France",
       "AwayTeam": "Morocco",
       "Group": null,
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 2,
+      "AwayTeamScore": 0,
+      "Winner": "France"
     },
     {
       "MatchNumber": 98,
@@ -1207,7 +1207,7 @@
       "RoundNumber": 7,
       "DateUtc": "2026-07-14 19:00:00Z",
       "Location": "Dallas Stadium",
-      "HomeTeam": "To be announced",
+      "HomeTeam": "France",
       "AwayTeam": "To be announced",
       "Group": null,
       "HomeTeamScore": null,
