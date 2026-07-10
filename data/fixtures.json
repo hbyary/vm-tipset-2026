@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-10T20:50:31Z",
+  "fetchedAt": "2026-07-10T22:09:18Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -1174,9 +1174,9 @@
       "HomeTeam": "Spain",
       "AwayTeam": "Belgium",
       "Group": null,
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 2,
+      "AwayTeamScore": 1,
+      "Winner": "Spain"
     },
     {
       "MatchNumber": 99,
@@ -1208,7 +1208,7 @@
       "DateUtc": "2026-07-14 19:00:00Z",
       "Location": "Dallas Stadium",
       "HomeTeam": "France",
-      "AwayTeam": "To be announced",
+      "AwayTeam": "Spain",
       "Group": null,
       "HomeTeamScore": null,
       "AwayTeamScore": null,
