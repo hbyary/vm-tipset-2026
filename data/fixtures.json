@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-12T00:00:34Z",
+  "fetchedAt": "2026-07-12T04:07:02Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -1186,9 +1186,9 @@
       "HomeTeam": "Norway",
       "AwayTeam": "England",
       "Group": null,
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 1,
+      "AwayTeamScore": 2,
+      "Winner": "England"
     },
     {
       "MatchNumber": 100,
@@ -1219,7 +1219,7 @@
       "RoundNumber": 7,
       "DateUtc": "2026-07-15 19:00:00Z",
       "Location": "Atlanta Stadium",
-      "HomeTeam": "To be announced",
+      "HomeTeam": "England",
       "AwayTeam": "To be announced",
       "Group": null,
       "HomeTeamScore": null,
