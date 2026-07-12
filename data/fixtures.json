@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-12T04:07:02Z",
+  "fetchedAt": "2026-07-12T07:07:18Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -1198,9 +1198,9 @@
       "HomeTeam": "Argentina",
       "AwayTeam": "Switzerland",
       "Group": null,
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 3,
+      "AwayTeamScore": 1,
+      "Winner": "Argentina"
     },
     {
       "MatchNumber": 101,
@@ -1220,7 +1220,7 @@
       "DateUtc": "2026-07-15 19:00:00Z",
       "Location": "Atlanta Stadium",
       "HomeTeam": "England",
-      "AwayTeam": "To be announced",
+      "AwayTeam": "Argentina",
       "Group": null,
       "HomeTeamScore": null,
       "AwayTeamScore": null,
