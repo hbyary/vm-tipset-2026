@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-18T23:28:09Z",
+  "fetchedAt": "2026-07-19T01:04:40Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -1234,9 +1234,9 @@
       "HomeTeam": "France",
       "AwayTeam": "England",
       "Group": null,
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 4,
+      "AwayTeamScore": 6,
+      "Winner": "England"
     },
     {
       "MatchNumber": 104,
