@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-19T21:58:23Z",
+  "fetchedAt": "2026-07-19T23:01:44Z",
   "source": "https://fixturedownload.com/feed/json/fifa-world-cup-2026",
   "matches": [
     {
@@ -1246,9 +1246,9 @@
       "HomeTeam": "Spain",
       "AwayTeam": "Argentina",
       "Group": null,
-      "HomeTeamScore": null,
-      "AwayTeamScore": null,
-      "Winner": ""
+      "HomeTeamScore": 1,
+      "AwayTeamScore": 0,
+      "Winner": "Spain"
     }
   ]
 }
